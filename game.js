@@ -17,6 +17,7 @@
   const panelPause = document.getElementById("panelPause");
   const panelGameOver = document.getElementById("panelGameOver");
   const panelSettings = document.getElementById("panelSettings");
+  const panelSkills = document.getElementById("panelSkills");
 
   const btnFullscreen = document.getElementById("btnFullscreen");
   const btnSettings = document.getElementById("btnSettings");
@@ -24,6 +25,7 @@
   const selMode = document.getElementById("selMode");
   const selDiff = document.getElementById("selDiff");
   const btnPlay = document.getElementById("btnPlay");
+  const btnSkills = document.getElementById("btnSkills");
   const btnShowLeaderboard = document.getElementById("btnShowLeaderboard");
   const leaderboard = document.getElementById("leaderboard");
   const leaderboardList = document.getElementById("leaderboardList");
@@ -48,6 +50,7 @@
 
   const hudMode = document.getElementById("hudMode");
   const hudDiff = document.getElementById("hudDiff");
+  const hudCores = document.getElementById("hudCores");
   const powerbar = document.getElementById("powerbar");
 
   const touch = document.getElementById("touch");
@@ -55,6 +58,23 @@
   const btnRight = document.getElementById("btnRight");
   const btnThrust = document.getElementById("btnThrust");
   const btnFire = document.getElementById("btnFire");
+
+  // Skill Tree UI
+  const btnCloseSkills = document.getElementById("btnCloseSkills");
+  const skillsCores = document.getElementById("skillsCores");
+  const skillsGrid = document.getElementById("skillsGrid");
+  const skillsLines = document.getElementById("skillsLines");
+  const skillTitle = document.getElementById("skillTitle");
+  const skillDesc = document.getElementById("skillDesc");
+  const skillCost = document.getElementById("skillCost");
+  const skillType = document.getElementById("skillType");
+  const btnUnlockSkill = document.getElementById("btnUnlockSkill");
+  const skillHint = document.getElementById("skillHint");
+  const activeModsEl = document.getElementById("activeMods");
+
+  // GameOver rewards UI
+  const runCoresEl = document.getElementById("runCores");
+  const runCoresBreakdownEl = document.getElementById("runCoresBreakdown");
 
   // =========================
   // Core timing
@@ -133,6 +153,258 @@
   };
 
   // =========================
+  // META PROGRESSION (NÚCLEOS + SKILL TREE)
+  // =========================
+  const META_KEY = "asteroids_meta_v1";
+
+  let meta = loadMeta();
+
+  function loadMeta() {
+    try {
+      const raw = localStorage.getItem(META_KEY);
+      if (!raw) return { cores: 0, unlocked: { core: true } };
+      const parsed = JSON.parse(raw);
+      return {
+        cores: typeof parsed.cores === "number" ? parsed.cores : 0,
+        unlocked:
+          parsed.unlocked && typeof parsed.unlocked === "object"
+            ? parsed.unlocked
+            : { core: true },
+      };
+    } catch {
+      return { cores: 0, unlocked: { core: true } };
+    }
+  }
+
+  function saveMeta() {
+    try {
+      localStorage.setItem(META_KEY, JSON.stringify(meta));
+    } catch {}
+  }
+
+  function hasSkill(id) {
+    return !!meta.unlocked[id];
+  }
+
+  const SKILLS = [
+    {
+      id: "core",
+      name: "Pilot Core",
+      icon: "◆",
+      type: "Base",
+      cost: 0,
+      req: [],
+      desc: "O núcleo do piloto. Libera a árvore.",
+      mods: {},
+    },
+
+    // Engenharia
+    {
+      id: "thrusters1",
+      name: "Thrusters I",
+      icon: "⚡",
+      type: "Engenharia",
+      cost: 3,
+      req: ["core"],
+      desc: "+6% aceleração do impulso.",
+      mods: { thrustMul: 1.06 },
+    },
+    {
+      id: "thrusters2",
+      name: "Thrusters II",
+      icon: "⚡",
+      type: "Engenharia",
+      cost: 6,
+      req: ["thrusters1"],
+      desc: "+10% aceleração do impulso.",
+      mods: { thrustMul: 1.1 },
+    },
+    {
+      id: "stabilizers",
+      name: "Stabilizers",
+      icon: "◎",
+      type: "Engenharia",
+      cost: 5,
+      req: ["thrusters1"],
+      desc: "Menos deriva (controle mais firme).",
+      mods: { frictionMul: 0.92 },
+    },
+    {
+      id: "overdrive",
+      name: "Overdrive",
+      icon: "⟡",
+      type: "Engenharia",
+      cost: 7,
+      req: ["thrusters2"],
+      desc: "+10% velocidade máxima.",
+      mods: { maxSpeedMul: 1.1 },
+    },
+
+    // Armas
+    {
+      id: "capacitors",
+      name: "Capacitors",
+      icon: "✦",
+      type: "Armas",
+      cost: 4,
+      req: ["core"],
+      desc: "+8% velocidade do laser.",
+      mods: { laserSpeedMul: 1.08 },
+    },
+    {
+      id: "cooling",
+      name: "Cooling",
+      icon: "❄",
+      type: "Armas",
+      cost: 6,
+      req: ["capacitors"],
+      desc: "Menor cooldown de tiro.",
+      mods: { shootCdMul: 0.88 },
+    },
+    {
+      id: "magazine",
+      name: "Magazine",
+      icon: "▣",
+      type: "Armas",
+      cost: 7,
+      req: ["cooling"],
+      desc: "+2 lasers simultâneos.",
+      mods: { laserMaxAdd: 2 },
+    },
+    {
+      id: "powerMastery",
+      name: "Power Mastery",
+      icon: "✺",
+      type: "Armas",
+      cost: 6,
+      req: ["capacitors"],
+      desc: "Power-ups duram +20%.",
+      mods: { powerDurMul: 1.2 },
+    },
+
+    // Sobrevivência
+    {
+      id: "shieldStart",
+      name: "Shield Protocol",
+      icon: "🛡",
+      type: "Sobrevivência",
+      cost: 8,
+      req: ["core"],
+      desc: "Começa a run com 1 shield.",
+      mods: { startShield: 1 },
+    },
+    {
+      id: "blinkMatrix",
+      name: "Blink Matrix",
+      icon: "⌁",
+      type: "Sobrevivência",
+      cost: 6,
+      req: ["shieldStart"],
+      desc: "+12% invencibilidade pós-hit.",
+      mods: { invulnMul: 1.12 },
+    },
+    {
+      id: "salvage",
+      name: "Salvage",
+      icon: "⛭",
+      type: "Sobrevivência",
+      cost: 6,
+      req: ["shieldStart"],
+      desc: "+20% chance de drop de power-up.",
+      mods: { dropChanceMul: 1.2 },
+    },
+
+    // Contratos (dificuldade por recompensa)
+    {
+      id: "contract1",
+      name: "Contract I",
+      icon: "☠",
+      type: "Contrato",
+      cost: 5,
+      req: ["core"],
+      desc: "Asteroides +8% velozes. Núcleos +15%.",
+      mods: { roidSpeedMul: 1.08, coresYieldAdd: 0.15 },
+    },
+    {
+      id: "contract2",
+      name: "Contract II",
+      icon: "☠",
+      type: "Contrato",
+      cost: 7,
+      req: ["contract1"],
+      desc: "UFO aparece mais. Núcleos +20%.",
+      mods: { ufoRateMul: 1.2, coresYieldAdd: 0.2 },
+    },
+    {
+      id: "contract3",
+      name: "Contract III",
+      icon: "☠",
+      type: "Contrato",
+      cost: 9,
+      req: ["contract2"],
+      desc: "Wave com +1 asteroide base. Núcleos +25%.",
+      mods: { extraRoidPerWave: 1, coresYieldAdd: 0.25 },
+    },
+  ];
+
+  function computeMetaMods() {
+    const mods = {
+      thrustMul: 1,
+      frictionMul: 1,
+      maxSpeedMul: 1,
+
+      laserSpeedMul: 1,
+      shootCdMul: 1,
+      laserMaxAdd: 0,
+      powerDurMul: 1,
+
+      invulnMul: 1,
+      dropChanceMul: 1,
+      startShield: 0,
+
+      roidSpeedMul: 1,
+      ufoRateMul: 1,
+      extraRoidPerWave: 0,
+      coresYieldAdd: 0,
+    };
+
+    for (const s of SKILLS) {
+      if (!hasSkill(s.id)) continue;
+      const m = s.mods || {};
+
+      if (m.thrustMul) mods.thrustMul *= m.thrustMul;
+      if (m.frictionMul) mods.frictionMul *= m.frictionMul;
+      if (m.maxSpeedMul) mods.maxSpeedMul *= m.maxSpeedMul;
+
+      if (m.laserSpeedMul) mods.laserSpeedMul *= m.laserSpeedMul;
+      if (m.shootCdMul) mods.shootCdMul *= m.shootCdMul;
+      if (m.laserMaxAdd) mods.laserMaxAdd += m.laserMaxAdd;
+      if (m.powerDurMul) mods.powerDurMul *= m.powerDurMul;
+
+      if (m.invulnMul) mods.invulnMul *= m.invulnMul;
+      if (m.dropChanceMul) mods.dropChanceMul *= m.dropChanceMul;
+      if (m.startShield) mods.startShield += m.startShield;
+
+      if (m.roidSpeedMul) mods.roidSpeedMul *= m.roidSpeedMul;
+      if (m.ufoRateMul) mods.ufoRateMul *= m.ufoRateMul;
+      if (m.extraRoidPerWave) mods.extraRoidPerWave += m.extraRoidPerWave;
+      if (m.coresYieldAdd) mods.coresYieldAdd += m.coresYieldAdd;
+    }
+
+    mods.frictionMul = clamp(mods.frictionMul, 0.7, 1.2);
+    mods.shootCdMul = clamp(mods.shootCdMul, 0.65, 1.25);
+    mods.powerDurMul = clamp(mods.powerDurMul, 1.0, 1.6);
+    mods.invulnMul = clamp(mods.invulnMul, 1.0, 1.35);
+
+    return mods;
+  }
+
+  function syncCoresUI() {
+    if (hudCores) hudCores.textContent = String(meta.cores);
+    if (skillsCores) skillsCores.textContent = String(meta.cores);
+  }
+
+  // =========================
   // Game State
   // =========================
   const STATE = {
@@ -174,6 +446,14 @@
     fpsAcc: 0,
     fpsFrames: 0,
     fpsValue: 0,
+
+    // meta-run stats
+    runDeaths: 0,
+    runUfoKills: 0,
+    runMaxCombo: 1,
+
+    // tuning da run (diff + meta mods)
+    tuning: null,
   };
 
   // =========================
@@ -252,7 +532,7 @@
   const fxHit = new Sound("sounds/hit.m4a", 6, 0.75);
   const fxLaser = new Sound("sounds/laser.m4a", 6, 0.55);
   const fxThrust = new Sound("sounds/thrust.m4a", 1, 0.35);
-  const fxPower = new Sound("sounds/power.m4a", 2, 0.7); // opcional (se não existir, não quebra)
+  const fxPower = new Sound("sounds/power.m4a", 2, 0.7); // opcional
   const fxUfoHit = new Sound("sounds/ufo_hit.m4a", 2, 0.8); // opcional
 
   const music = new Music("sounds/music-low.m4a", "sounds/music-high.m4a");
@@ -272,6 +552,10 @@
   // Entities
   // =========================
   function newShip() {
+    const invMul = game.tuning?.invulnMul ?? 1;
+    const invDur = BASE.SHIP_INV_DUR * invMul;
+    const blinkDur = BASE.SHIP_BLINK_DUR;
+
     return {
       x: canv.width / 2,
       y: canv.height / 2,
@@ -287,8 +571,8 @@
       lasers: [],
       dead: false,
       explodeTime: 0,
-      blinkNum: Math.ceil(BASE.SHIP_INV_DUR / BASE.SHIP_BLINK_DUR),
-      blinkTime: Math.ceil(BASE.SHIP_BLINK_DUR * FPS),
+      blinkNum: Math.ceil(invDur / blinkDur),
+      blinkTime: Math.ceil(blinkDur * FPS),
       shield: 0, // 0/1
       tookHitGrace: 0, // pequeno “coyote time” pós-hit
     };
@@ -298,7 +582,7 @@
 
   function newAsteroid(x, y, r, speedMult = 1) {
     const diff = DIFFS[settings.difficulty];
-    const baseSpd = diff.roidSpeed;
+    const baseSpd = game.tuning?.roidSpeed ?? diff.roidSpeed;
     const lvlMult = 1 + 0.085 * game.wave;
 
     const roid = {
@@ -349,6 +633,7 @@
     panelPause.classList.add("hidden");
     panelGameOver.classList.add("hidden");
     panelSettings.classList.add("hidden");
+    panelSkills.classList.add("hidden");
 
     if (panel) panel.classList.remove("hidden");
   }
@@ -359,6 +644,7 @@
     panelPause.classList.add("hidden");
     panelGameOver.classList.add("hidden");
     panelSettings.classList.add("hidden");
+    panelSkills.classList.add("hidden");
   }
 
   function modeKey() {
@@ -481,6 +767,13 @@
     score2x: 0,
   };
 
+  const activePowerMax = {
+    triple: POWER.triple.dur,
+    slow: POWER.slow.dur,
+    rapid: POWER.rapid.dur,
+    score2x: POWER.score2x.dur,
+  };
+
   function powerScoreMult() {
     return activePower.score2x > 0 ? 2 : 1;
   }
@@ -490,12 +783,15 @@
   }
 
   function rapidFireCd() {
-    return activePower.rapid > 0 ? 0.1 : 0.22; // segundos
+    const base = activePower.rapid > 0 ? 0.1 : 0.22; // segundos
+    const mul = game.tuning?.shootCdMul ?? 1;
+    return base * mul;
   }
 
   function dropPowerup(x, y) {
-    // chance base + um pouco por wave
-    const chance = 0.14 + Math.min(0.06, game.wave * 0.004);
+    const baseChance = 0.14 + Math.min(0.06, game.wave * 0.004);
+    const mul = game.tuning?.dropChanceMul ?? 1;
+    const chance = clamp(baseChance * mul, 0, 0.35);
     if (Math.random() > chance) return;
 
     const roll = Math.random();
@@ -528,7 +824,11 @@
       return;
     }
 
-    activePower[type] = Math.max(activePower[type], POWER[type].dur);
+    const durMul = game.tuning?.powerDurMul ?? 1;
+    const max = POWER[type].dur * durMul;
+    activePowerMax[type] = max;
+    activePower[type] = Math.max(activePower[type], max);
+
     addFloater(ship.x, ship.y, POWER[type].label + "!", POWER[type].color, 0.9);
   }
 
@@ -539,7 +839,7 @@
         items.push({
           key: k,
           time: t,
-          max: POWER[k].dur,
+          max: activePowerMax[k] || POWER[k].dur,
           label: POWER[k].label,
         });
     }
@@ -562,6 +862,10 @@
   // =========================
   // UFO
   // =========================
+  function getUfoRate() {
+    return game.tuning?.ufoRate ?? DIFFS[settings.difficulty].ufoRate;
+  }
+
   function spawnUfo() {
     const dir = Math.random() < 0.5 ? 1 : -1;
     const small = Math.random() < 0.55;
@@ -574,7 +878,7 @@
     const x = dir === 1 ? -40 : canv.width + 40;
 
     const baseV = small ? 110 : 80;
-    const v = (baseV * DIFFS[settings.difficulty].ufoRate) / FPS;
+    const v = (baseV * getUfoRate()) / FPS;
 
     game.ufo = {
       small,
@@ -587,7 +891,6 @@
       life: 12,
     };
 
-    // sirene
     ufoSiren.currentTime = 0;
     ufoSiren.volume = settings.sfxOn
       ? clamp(0.28 * settings.sfxVolume, 0, 1)
@@ -631,7 +934,6 @@
   let roidsLeft = 0;
 
   function wavePattern(w) {
-    // padrões alternando: muitos pequenos / poucos grandes / mix
     const m = w % 4;
     if (m === 0) return { large: 1, med: 3, small: 6 };
     if (m === 1) return { large: 3, med: 0, small: 2 };
@@ -646,7 +948,8 @@
     const M = Math.ceil(BASE.ROID_SIZE / 4);
     const S = Math.ceil(BASE.ROID_SIZE / 8);
 
-    const total = pat.large + pat.med + pat.small;
+    const extra = game.tuning?.extraRoidPerWave ?? 0;
+    const total = pat.large + pat.med + pat.small + extra;
     roidsTotal = total;
     roidsLeft = total;
 
@@ -662,10 +965,20 @@
       }
     }
 
-    // “muitos pequenos” ficam mais vivos
     spawnCount(pat.large, L, 1.0);
     spawnCount(pat.med, M, 1.05);
     spawnCount(pat.small, S, 1.12);
+
+    if (extra > 0) {
+      for (let i = 0; i < extra; i++) {
+        let x, y;
+        do {
+          x = Math.floor(Math.random() * canv.width);
+          y = Math.floor(Math.random() * canv.height);
+        } while (dist(ship.x, ship.y, x, y) < BASE.ROID_SIZE * 1.7 + ship.r);
+        game.roids.push(newAsteroid(x, y, M, 1.05));
+      }
+    }
 
     music.setAsteroidRatio(1);
   }
@@ -680,8 +993,9 @@
 
   function bumpCombo() {
     game.comboStreak++;
-    game.comboTime = 3.0; // segundos
+    game.comboTime = 3.0;
     game.comboMult = clamp(1 + Math.floor(game.comboStreak / 3), 1, 5);
+    game.runMaxCombo = Math.max(game.runMaxCombo, game.comboMult);
 
     if (game.comboStreak > 0 && game.comboStreak % 6 === 0) {
       addFloater(
@@ -727,11 +1041,9 @@
     const y = roid.y;
     const r = roid.r;
 
-    // juice
     doShake(6, 0.18);
     doFlash(0.28);
 
-    // partículas
     const sizeFactor = r / (BASE.ROID_SIZE / 2);
     spawnParticles(
       x,
@@ -745,10 +1057,8 @@
       2.6
     );
 
-    // power drop
     dropPowerup(x, y);
 
-    // pontuação e combo
     if (r === Math.ceil(BASE.ROID_SIZE / 2)) addScore(20, hitX ?? x, hitY ?? y);
     else if (r === Math.ceil(BASE.ROID_SIZE / 4))
       addScore(50, hitX ?? x, hitY ?? y);
@@ -757,31 +1067,31 @@
     bumpCombo();
     precisionHit();
 
-    // split
+    // split (ajusta roidsTotal/roidsLeft pro ritmo da música ficar correto)
     if (r === Math.ceil(BASE.ROID_SIZE / 2)) {
       game.roids.push(newAsteroid(x, y, Math.ceil(BASE.ROID_SIZE / 4), 1.05));
       game.roids.push(newAsteroid(x, y, Math.ceil(BASE.ROID_SIZE / 4), 1.05));
+      roidsTotal += 2;
+      roidsLeft += 2;
     } else if (r === Math.ceil(BASE.ROID_SIZE / 4)) {
       game.roids.push(newAsteroid(x, y, Math.ceil(BASE.ROID_SIZE / 8), 1.12));
       game.roids.push(newAsteroid(x, y, Math.ceil(BASE.ROID_SIZE / 8), 1.12));
+      roidsTotal += 2;
+      roidsLeft += 2;
     }
 
-    // remove
     game.roids.splice(index, 1);
     fxHit.play();
 
-    // music tempo ratio
     roidsLeft--;
-    music.setAsteroidRatio(roidsLeft === 0 ? 1 : roidsLeft / roidsTotal);
+    music.setAsteroidRatio(roidsLeft <= 0 ? 1 : roidsLeft / roidsTotal);
 
     if (game.roids.length === 0) {
-      // wave clear
       game.state = STATE.WAVE_CLEAR;
       game.text = "WAVE CLEARED";
       game.textAlpha = 1.0;
       game.countdown = 3.0;
 
-      // confete de estrelas
       spawnParticles(
         canv.width / 2,
         canv.height / 2,
@@ -816,24 +1126,28 @@
   function shootLaser() {
     if (ship.dead) return;
     if (ship.shootCd > 0) return;
-    if (ship.lasers.length >= BASE.LASER_MAX) return;
+
+    const maxLasers = game.tuning?.laserMax ?? BASE.LASER_MAX;
+    if (ship.lasers.length >= maxLasers) return;
 
     const baseCd = rapidFireCd();
     ship.shootCd = baseCd;
 
     const spread = activePower.triple > 0 ? [-0.14, 0, 0.14] : [0];
     for (const s of spread) {
-      if (ship.lasers.length >= BASE.LASER_MAX) break;
+      if (ship.lasers.length >= maxLasers) break;
 
       const ang = ship.a + s;
       const lx = ship.x + (4 / 3) * ship.r * Math.cos(ang);
       const ly = ship.y - (4 / 3) * ship.r * Math.sin(ang);
 
+      const laserSpd = game.tuning?.laserSpeed ?? BASE.LASER_SPD;
+
       ship.lasers.push({
         x: lx,
         y: ly,
-        xv: (BASE.LASER_SPD * Math.cos(ang)) / FPS,
-        yv: (-BASE.LASER_SPD * Math.sin(ang)) / FPS,
+        xv: (laserSpd * Math.cos(ang)) / FPS,
+        yv: (-laserSpd * Math.sin(ang)) / FPS,
         dist: 0,
         explodeTime: 0,
         trail: [{ x: lx, y: ly }],
@@ -869,11 +1183,12 @@
   }
 
   function resetRun() {
-    const diff = DIFFS[settings.difficulty];
+    const baseDiff = DIFFS[settings.difficulty];
+    const metaMods = computeMetaMods();
 
     game.wave = 0;
     game.score = 0;
-    game.lives = settings.mode === "one_life" ? 1 : diff.lives;
+    game.lives = settings.mode === "one_life" ? 1 : baseDiff.lives;
 
     game.timeLeft = MODES[settings.mode].timeLimit;
     game.roids = [];
@@ -897,19 +1212,52 @@
     game.shakeTime = 0;
     game.shakeMag = 0;
 
+    game.runDeaths = 0;
+    game.runUfoKills = 0;
+    game.runMaxCombo = 1;
+
     activePower.triple = 0;
     activePower.slow = 0;
     activePower.rapid = 0;
     activePower.score2x = 0;
 
+    activePowerMax.triple = POWER.triple.dur * (metaMods.powerDurMul ?? 1);
+    activePowerMax.slow = POWER.slow.dur * (metaMods.powerDurMul ?? 1);
+    activePowerMax.rapid = POWER.rapid.dur * (metaMods.powerDurMul ?? 1);
+    activePowerMax.score2x = POWER.score2x.dur * (metaMods.powerDurMul ?? 1);
+
+    game.tuning = {
+      ...baseDiff,
+
+      roidSpeed: baseDiff.roidSpeed * metaMods.roidSpeedMul,
+      ufoRate: baseDiff.ufoRate * metaMods.ufoRateMul,
+      extraRoidPerWave: metaMods.extraRoidPerWave,
+
+      thrust: baseDiff.thrust * metaMods.thrustMul,
+      friction: baseDiff.friction * metaMods.frictionMul,
+      maxSpeed: baseDiff.maxSpeed * metaMods.maxSpeedMul,
+
+      laserSpeed: BASE.LASER_SPD * metaMods.laserSpeedMul,
+      laserMax: BASE.LASER_MAX + metaMods.laserMaxAdd,
+      shootCdMul: metaMods.shootCdMul,
+
+      startShield: metaMods.startShield,
+      invulnMul: metaMods.invulnMul,
+
+      dropChanceMul: metaMods.dropChanceMul,
+      powerDurMul: metaMods.powerDurMul,
+
+      coresYieldBonus: metaMods.coresYieldAdd,
+    };
+
     ship = newShip();
+    if ((game.tuning.startShield ?? 0) > 0) ship.shield = 1;
 
     game.ufoSpawnT = 6.5; // delay inicial
     createWave();
   }
 
   function startGameFromMenu() {
-    // trava música até primeiro start (política de autoplay)
     game.musicReady = true;
 
     resetRun();
@@ -920,20 +1268,106 @@
     hudMode.textContent = MODES[settings.mode].label;
     hudDiff.textContent = DIFFS[settings.difficulty].label;
 
-    // foco do teclado
     canv.focus();
-
     renderPowerbar();
+    syncCoresUI();
+  }
+
+  function calcCoresEarned() {
+    const breakdown = [];
+    let cores = 0;
+
+    const wave = game.wave + 1;
+    const acc = game.shotsFired > 0 ? game.shotsHit / game.shotsFired : 0;
+
+    if (game.score < 400 || wave < 3) {
+      return { cores: 0, breakdown: ["Sem Núcleos: run curta demais."] };
+    }
+
+    if (wave >= 6) {
+      cores += 1;
+      breakdown.push("Wave 6+ (+1)");
+    }
+    if (wave >= 11) {
+      cores += 1;
+      breakdown.push("Wave 11+ (+1)");
+    }
+    if (wave >= 16) {
+      cores += 1;
+      breakdown.push("Wave 16+ (+1)");
+    }
+
+    const ufoC = Math.min(2, game.runUfoKills);
+    if (ufoC > 0) {
+      cores += ufoC;
+      breakdown.push(`UFO abatido x${ufoC} (+${ufoC})`);
+    }
+
+    if (acc >= 0.7 && game.score >= 2500) {
+      cores += 1;
+      breakdown.push("Precisão 70%+ e 2500+ pts (+1)");
+    }
+
+    if (game.runDeaths === 0 && wave >= 8) {
+      cores += 1;
+      breakdown.push("Run sem mortes (Wave 8+) (+1)");
+    }
+
+    if (settings.mode === "one_life" && wave >= 6) {
+      cores += 1;
+      breakdown.push("One Life: Wave 6+ (+1)");
+    }
+
+    if (settings.mode === "time_attack") {
+      if (game.score >= 4000) {
+        cores += 2;
+        breakdown.push("Time Attack: 4000+ pts (+2)");
+      } else if (game.score >= 2500) {
+        cores += 1;
+        breakdown.push("Time Attack: 2500+ pts (+1)");
+      }
+    }
+
+    if (settings.difficulty === "hard" && (wave >= 8 || game.score >= 3000)) {
+      cores += 1;
+      breakdown.push("Hard bônus (+1)");
+    }
+
+    const bonus = game.tuning?.coresYieldBonus ?? 0;
+    if (bonus > 0 && cores > 0) {
+      const extra = Math.floor(cores * bonus);
+      if (extra > 0) {
+        cores += extra;
+        breakdown.push(`Contratos: +${Math.round(bonus * 100)}% (+${extra})`);
+      } else {
+        breakdown.push(`Contratos ativos (+${Math.round(bonus * 100)}%)`);
+      }
+    }
+
+    return { cores, breakdown };
   }
 
   function endGame(reason) {
     game.state = STATE.GAMEOVER;
     ship.dead = true;
 
-    // salva ranking
     saveLeaderboard(game.score);
 
-    // overlay
+    const earned = calcCoresEarned();
+    meta.cores += earned.cores;
+    saveMeta();
+    syncCoresUI();
+
+    if (runCoresEl) runCoresEl.textContent = String(earned.cores);
+    if (runCoresBreakdownEl) {
+      runCoresBreakdownEl.innerHTML = "";
+      for (const line of earned.breakdown) {
+        const li = document.createElement("li");
+        li.textContent = line;
+        runCoresBreakdownEl.appendChild(li);
+      }
+    }
+
     setOverlay(panelGameOver);
     renderLeaderboard(leaderboardList2);
 
@@ -972,7 +1406,6 @@
   }
 
   function drawHUD() {
-    // score right
     ctx.textAlign = "right";
     ctx.textBaseline = "middle";
     ctx.fillStyle = "white";
@@ -983,12 +1416,10 @@
       BASE.SHIP_SIZE
     );
 
-    // best center
     ctx.textAlign = "center";
     ctx.font = "18px dejavu sans mono";
     ctx.fillText("BEST " + game.best, canv.width / 2, BASE.SHIP_SIZE);
 
-    // lives left
     for (let i = 0; i < game.lives; i++) {
       const lifeColour =
         ship.explodeTime > 0 && i === game.lives - 1 ? "red" : "white";
@@ -1000,7 +1431,6 @@
       );
     }
 
-    // wave + combo
     ctx.textAlign = "left";
     ctx.font = "16px dejavu sans mono";
     ctx.fillStyle = "rgba(255,255,255,0.85)";
@@ -1009,7 +1439,6 @@
     ctx.textAlign = "right";
     ctx.fillText(`x${game.comboMult}`, canv.width - 10, canv.height - 16);
 
-    // time attack timer
     if (game.timeLeft != null) {
       ctx.textAlign = "left";
       const t = Math.max(0, game.timeLeft);
@@ -1019,7 +1448,6 @@
       ctx.fillText(`${mm}:${ss}`, 10, 18);
     }
 
-    // fps dev
     if (settings.showFPS) {
       ctx.textAlign = "left";
       ctx.fillStyle = "rgba(255,255,255,0.65)";
@@ -1027,7 +1455,6 @@
       ctx.fillText(`FPS ${game.fpsValue}`, 10, canv.height - 34);
     }
 
-    // shield indicator
     if (ship.shield > 0 && !ship.dead) {
       ctx.save();
       ctx.strokeStyle = "rgba(67,255,122,0.85)";
@@ -1068,14 +1495,12 @@
   document.addEventListener("keydown", (ev) => {
     preventScrollKeys(ev);
 
-    // menu start
     if (game.state === STATE.MENU) {
       if (ev.code === "Space" || ev.key === "Enter") startGameFromMenu();
       if (ev.key.toLowerCase() === "f") settings.showFPS = !settings.showFPS;
       return;
     }
 
-    // pause toggle
     if (ev.key === "Escape" || ev.key.toLowerCase() === "p") {
       togglePause();
       return;
@@ -1165,7 +1590,6 @@
     () => (ship.shooting = false)
   );
 
-  // focus on click
   canv.addEventListener("pointerdown", () => canv.focus(), { passive: true });
 
   // =========================
@@ -1195,7 +1619,6 @@
   });
 
   btnQuit.addEventListener("click", () => {
-    game.state = STATE.MENU;
     showMenu();
   });
 
@@ -1206,7 +1629,6 @@
   });
 
   btnBackMenu.addEventListener("click", () => {
-    game.state = STATE.MENU;
     showMenu();
   });
 
@@ -1215,25 +1637,12 @@
     renderLeaderboard(leaderboardList);
   });
 
-  function showMenu() {
-    setOverlay(panelMenu);
-    leaderboard.classList.add("hidden");
-    renderLeaderboard(leaderboardList);
-
-    hudMode.textContent = MODES[settings.mode].label;
-    hudDiff.textContent = DIFFS[settings.difficulty].label;
-
-    // para garantir sirene desligada
-    despawnUfo();
-  }
-
   // settings panel
   btnSettings.addEventListener("click", () => openSettings());
   btnCloseSettings.addEventListener("click", () => closeSettings());
 
   function openSettings() {
     setOverlay(panelSettings);
-    // refletir estado atual
     chkMusic.checked = settings.musicOn;
     chkSfx.checked = settings.sfxOn;
     rngMusic.value = String(settings.musicVolume);
@@ -1244,7 +1653,6 @@
   }
 
   function closeSettings() {
-    // volta pro menu se estava menu, senão só fecha overlay se jogando/pausado
     if (game.state === STATE.MENU) {
       setOverlay(panelMenu);
     } else if (game.state === STATE.PAUSED) {
@@ -1331,6 +1739,182 @@
   })();
 
   // =========================
+  // Skill Tree UI
+  // =========================
+  let selectedSkillId = null;
+
+  function canUnlockSkill(s) {
+    if (hasSkill(s.id)) return false;
+    if (meta.cores < s.cost) return false;
+    return (s.req || []).every(hasSkill);
+  }
+
+  function renderActiveMods() {
+    const m = computeMetaMods();
+    const parts = [
+      `Thrust x${m.thrustMul.toFixed(2)}`,
+      `Friction x${m.frictionMul.toFixed(2)}`,
+      `MaxSpeed x${m.maxSpeedMul.toFixed(2)}`,
+      `LaserSpeed x${m.laserSpeedMul.toFixed(2)}`,
+      `ShootCD x${m.shootCdMul.toFixed(2)}`,
+      `LaserMax +${m.laserMaxAdd}`,
+      `PowerDur x${m.powerDurMul.toFixed(2)}`,
+      `Invuln x${m.invulnMul.toFixed(2)}`,
+      `DropChance x${m.dropChanceMul.toFixed(2)}`,
+      `StartShield +${m.startShield}`,
+      `Contracts: RoidSpeed x${m.roidSpeedMul.toFixed(
+        2
+      )}, UFO x${m.ufoRateMul.toFixed(2)}, +Roid/Wave ${
+        m.extraRoidPerWave
+      }, CoresYield +${Math.round(m.coresYieldAdd * 100)}%`,
+    ];
+    activeModsEl.textContent = parts.join(" | ");
+  }
+
+  function renderSkillTree() {
+    syncCoresUI();
+    renderActiveMods();
+
+    skillsGrid.innerHTML = "";
+
+    for (const s of SKILLS) {
+      const unlocked = hasSkill(s.id);
+      const available = canUnlockSkill(s);
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = [
+        "skillNode",
+        unlocked ? "skillNode--unlocked" : "skillNode--locked",
+        available ? "skillNode--available" : "",
+        selectedSkillId === s.id ? "skillNode--selected" : "",
+      ]
+        .filter(Boolean)
+        .join(" ");
+
+      btn.dataset.skillId = s.id;
+
+      btn.innerHTML = `
+        <div class="skillNode__icon">${s.icon}</div>
+        <div class="skillNode__name">${s.name}</div>
+        <div class="skillNode__cost">${
+          unlocked ? "OWNED" : `CUSTO ${s.cost}`
+        }</div>
+      `;
+
+      btn.addEventListener("click", () => selectSkill(s.id));
+      skillsGrid.appendChild(btn);
+    }
+
+    requestAnimationFrame(drawSkillLines);
+  }
+
+  function selectSkill(id) {
+    selectedSkillId = id;
+    const s = SKILLS.find((x) => x.id === id);
+    if (!s) return;
+
+    skillTitle.textContent = `${s.icon} ${s.name}`;
+    skillDesc.textContent = s.desc;
+    skillCost.textContent = s.cost === 0 ? "—" : String(s.cost);
+    skillType.textContent = s.type;
+
+    const unlocked = hasSkill(s.id);
+    const ok = canUnlockSkill(s);
+
+    btnUnlockSkill.disabled = unlocked || !ok;
+
+    if (unlocked) skillHint.textContent = "Você já possui esta habilidade.";
+    else if (!ok) {
+      const missingReq = (s.req || []).filter((r) => !hasSkill(r));
+      if (meta.cores < s.cost) skillHint.textContent = "Núcleos insuficientes.";
+      else skillHint.textContent = `Requer: ${missingReq.join(", ") || "—"}.`;
+    } else {
+      skillHint.textContent = "Disponível para desbloqueio.";
+    }
+
+    renderSkillTree();
+  }
+
+  function drawSkillLines() {
+    skillsLines.innerHTML = "";
+
+    const wrap = skillsGrid;
+    const nodes = [...wrap.querySelectorAll(".skillNode")];
+    const rectWrap = wrap.getBoundingClientRect();
+
+    function centerOf(el) {
+      const r = el.getBoundingClientRect();
+      return {
+        x: r.left - rectWrap.left + r.width / 2,
+        y: r.top - rectWrap.top + r.height / 2,
+      };
+    }
+
+    const map = new Map(nodes.map((n) => [n.dataset.skillId, n]));
+
+    for (const s of SKILLS) {
+      if (!s.req || s.req.length === 0) continue;
+      const toEl = map.get(s.id);
+      if (!toEl) continue;
+
+      for (const req of s.req) {
+        const fromEl = map.get(req);
+        if (!fromEl) continue;
+
+        const a = centerOf(fromEl);
+        const b = centerOf(toEl);
+
+        const unlocked = hasSkill(s.id) && hasSkill(req);
+        const stroke = unlocked
+          ? "rgba(67,255,122,0.35)"
+          : "rgba(255,255,255,0.16)";
+
+        const path = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "path"
+        );
+        const midX = (a.x + b.x) / 2;
+        const d = `M ${a.x} ${a.y} C ${midX} ${a.y}, ${midX} ${b.y}, ${b.x} ${b.y}`;
+        path.setAttribute("d", d);
+        path.setAttribute("fill", "none");
+        path.setAttribute("stroke", stroke);
+        path.setAttribute("stroke-width", "2");
+        path.setAttribute("stroke-linecap", "round");
+        skillsLines.appendChild(path);
+      }
+    }
+  }
+
+  function openSkills() {
+    setOverlay(panelSkills);
+    renderSkillTree();
+    if (!selectedSkillId) selectSkill("core");
+  }
+
+  function closeSkills() {
+    if (game.state === STATE.MENU) setOverlay(panelMenu);
+    else if (game.state === STATE.PAUSED) setOverlay(panelPause);
+    else hideOverlay();
+  }
+
+  btnSkills.addEventListener("click", openSkills);
+  btnCloseSkills.addEventListener("click", closeSkills);
+
+  btnUnlockSkill.addEventListener("click", () => {
+    const s = SKILLS.find((x) => x.id === selectedSkillId);
+    if (!s) return;
+    if (!canUnlockSkill(s)) return;
+
+    meta.cores -= s.cost;
+    meta.unlocked[s.id] = true;
+    saveMeta();
+    syncCoresUI();
+    renderSkillTree();
+    selectSkill(s.id);
+  });
+
+  // =========================
   // Init
   // =========================
   function init() {
@@ -1346,15 +1930,29 @@
 
     game.state = STATE.MENU;
     showMenu();
+    syncCoresUI();
 
     setInterval(update, 1000 / FPS);
+  }
+
+  function showMenu() {
+    game.state = STATE.MENU;
+    setOverlay(panelMenu);
+    leaderboard.classList.add("hidden");
+    renderLeaderboard(leaderboardList);
+
+    hudMode.textContent = MODES[settings.mode].label;
+    hudDiff.textContent = DIFFS[settings.difficulty].label;
+
+    despawnUfo();
+    renderPowerbar();
+    syncCoresUI();
   }
 
   // =========================
   // Update loop
   // =========================
   function update() {
-    // FPS meter
     game.fpsAcc += DT;
     game.fpsFrames++;
     if (game.fpsAcc >= 1) {
@@ -1363,10 +1961,8 @@
       game.fpsAcc = 0;
     }
 
-    // always draw
     draw();
 
-    // do not advance if paused/menu/gameover
     if (
       game.state === STATE.PAUSED ||
       game.state === STATE.MENU ||
@@ -1374,10 +1970,8 @@
     )
       return;
 
-    // music tick (somente após start)
     music.tick();
 
-    // countdown & wave clear states
     if (game.state === STATE.COUNTDOWN) {
       game.countdown -= DT;
       if (game.countdown <= 0) {
@@ -1406,12 +2000,8 @@
       return;
     }
 
-    // =====================
-    // PLAYING updates
-    // =====================
     const ts = timeScale();
 
-    // time attack timer (real time)
     if (game.timeLeft != null) {
       game.timeLeft -= DT;
       if (game.timeLeft <= 0) {
@@ -1420,52 +2010,41 @@
       }
     }
 
-    // combo timer
     if (game.comboTime > 0) {
       game.comboTime -= DT;
       if (game.comboTime <= 0) resetCombo();
     }
 
-    // powerups time (real time)
     for (const k of Object.keys(activePower)) {
       if (activePower[k] > 0) activePower[k] = Math.max(0, activePower[k] - DT);
     }
     renderPowerbar();
 
-    // ship rotation smoothing
     ship.rot += (ship.rotTarget - ship.rot) * 0.35;
-
-    // ship shoot cooldown
     ship.shootCd = Math.max(0, ship.shootCd - DT);
-
-    // ship grace after hit
     ship.tookHitGrace = Math.max(0, ship.tookHitGrace - DT);
 
-    // thrust
-    const diff = DIFFS[settings.difficulty];
+    const tun = game.tuning ?? DIFFS[settings.difficulty];
+
     if (ship.thrusting && !ship.dead) {
-      ship.thrust.x += (diff.thrust * Math.cos(ship.a)) / FPS;
-      ship.thrust.y -= (diff.thrust * Math.sin(ship.a)) / FPS;
+      ship.thrust.x += (tun.thrust * Math.cos(ship.a)) / FPS;
+      ship.thrust.y -= (tun.thrust * Math.sin(ship.a)) / FPS;
       fxThrust.play();
     } else {
-      // “menos escorregadio”
-      ship.thrust.x -= (diff.friction * ship.thrust.x) / FPS;
-      ship.thrust.y -= (diff.friction * ship.thrust.y) / FPS;
+      ship.thrust.x -= (tun.friction * ship.thrust.x) / FPS;
+      ship.thrust.y -= (tun.friction * ship.thrust.y) / FPS;
       fxThrust.stop();
     }
 
-    // limit max speed
     const spd = Math.hypot(ship.thrust.x, ship.thrust.y);
-    const max = diff.maxSpeed;
+    const max = tun.maxSpeed;
     if (spd > max) {
       ship.thrust.x = (ship.thrust.x / spd) * max;
       ship.thrust.y = (ship.thrust.y / spd) * max;
     }
 
-    // shoot
     if (ship.shooting && !ship.dead) shootLaser();
 
-    // move ship (if not exploding)
     const exploding = ship.explodeTime > 0;
     if (!exploding && !ship.dead) {
       ship.a += ship.rot * ts;
@@ -1476,17 +2055,17 @@
       ship.explodeTime--;
       if (ship.explodeTime === 0) {
         game.lives--;
+        game.runDeaths++;
+
         if (game.lives <= 0) {
           endGame("dead");
           return;
         }
         ship = newShip();
-        // preserva shield? não (reinicia)
         resetCombo();
       }
     }
 
-    // blinking
     if (ship.blinkNum > 0 && !ship.dead) {
       ship.blinkTime--;
       if (ship.blinkTime === 0) {
@@ -1495,13 +2074,10 @@
       }
     }
 
-    // lasers update
     for (let i = ship.lasers.length - 1; i >= 0; i--) {
       const l = ship.lasers[i];
 
-      // remove if too far
       if (l.dist > BASE.LASER_DIST * canv.width) {
-        // miss => reseta streak
         if (!l.hit) game.hitStreak = 0;
         ship.lasers.splice(i, 1);
         continue;
@@ -1516,10 +2092,8 @@
       } else {
         l.x += l.xv * ts;
         l.y += l.yv * ts;
-
         l.dist += Math.hypot(l.xv, l.yv) * ts;
 
-        // trail
         l.trail.push({ x: l.x, y: l.y });
         if (l.trail.length > 7) l.trail.shift();
       }
@@ -1531,14 +2105,12 @@
       else if (l.y > canv.height) l.y = 0;
     }
 
-    // asteroids move
     for (const r of game.roids) {
       r.x += r.xv * ts;
       r.y += r.yv * ts;
       wrap(r);
     }
 
-    // particles
     for (let i = game.particles.length - 1; i >= 0; i--) {
       const p = game.particles[i];
       p.life -= DT;
@@ -1550,7 +2122,6 @@
       p.y += p.yv * ts;
     }
 
-    // floaters
     for (let i = game.floaters.length - 1; i >= 0; i--) {
       const f = game.floaters[i];
       f.life -= DT;
@@ -1561,7 +2132,6 @@
       f.y += f.vy * ts;
     }
 
-    // power drops
     for (let i = game.powerDrops.length - 1; i >= 0; i--) {
       const p = game.powerDrops[i];
       p.life -= DT;
@@ -1572,30 +2142,22 @@
       p.x += p.xv * ts;
       p.y += p.yv * ts;
 
-      // wrap
       if (p.x < 0) p.x = canv.width;
       else if (p.x > canv.width) p.x = 0;
       if (p.y < 0) p.y = canv.height;
       else if (p.y > canv.height) p.y = 0;
 
-      // pickup
       if (!ship.dead && dist(ship.x, ship.y, p.x, p.y) < ship.r + p.r + 4) {
         applyPowerup(p.type);
         game.powerDrops.splice(i, 1);
       }
     }
 
-    // UFO spawn logic (por tempo e score)
     game.ufoSpawnT -= DT;
     if (!game.ufo && game.ufoSpawnT <= 0) {
-      // em waves mais altas, aparece mais
       const next = 10 - Math.min(6, game.wave * 0.5);
-      game.ufoSpawnT = clamp(
-        next / DIFFS[settings.difficulty].ufoRate,
-        3.5,
-        12
-      );
-      // chance depende do score e wave
+      game.ufoSpawnT = clamp(next / getUfoRate(), 3.5, 12);
+
       const chance =
         0.25 +
         Math.min(0.35, game.wave * 0.03) +
@@ -1603,7 +2165,6 @@
       if (Math.random() < chance) spawnUfo();
     }
 
-    // UFO update
     if (game.ufo) {
       const u = game.ufo;
       u.life -= DT;
@@ -1615,7 +2176,6 @@
         ufoShoot();
       }
 
-      // despawn conditions
       if (
         u.life <= 0 ||
         (u.dir === 1 && u.x > canv.width + 60) ||
@@ -1625,7 +2185,6 @@
       }
     }
 
-    // UFO bullets
     for (let i = game.ufoBullets.length - 1; i >= 0; i--) {
       const b = game.ufoBullets[i];
       b.life -= DT;
@@ -1641,7 +2200,6 @@
       if (b.y < 0) b.y = canv.height;
       else if (b.y > canv.height) b.y = 0;
 
-      // hit ship
       if (
         !ship.dead &&
         ship.explodeTime === 0 &&
@@ -1664,7 +2222,6 @@
       }
     }
 
-    // collisions lasers vs asteroids
     for (let i = game.roids.length - 1; i >= 0; i--) {
       const a = game.roids[i];
       for (let j = ship.lasers.length - 1; j >= 0; j--) {
@@ -1679,7 +2236,6 @@
       }
     }
 
-    // lasers vs UFO
     if (game.ufo) {
       for (let j = ship.lasers.length - 1; j >= 0; j--) {
         const l = ship.lasers[j];
@@ -1705,6 +2261,8 @@
           bumpCombo();
           precisionHit();
 
+          game.runUfoKills++;
+
           l.explodeTime = Math.ceil(BASE.LASER_EXPLODE_DUR * FPS);
           despawnUfo();
           break;
@@ -1712,7 +2270,6 @@
       }
     }
 
-    // ship collisions vs asteroids
     if (
       !exploding &&
       !ship.dead &&
@@ -1722,7 +2279,6 @@
       for (let i = 0; i < game.roids.length; i++) {
         const a = game.roids[i];
         if (dist(ship.x, ship.y, a.x, a.y) < ship.r + a.r) {
-          // shield
           if (ship.shield > 0) {
             ship.shield = 0;
             ship.tookHitGrace = 0.35;
@@ -1730,7 +2286,6 @@
             doFlash(0.22);
             addFloater(ship.x, ship.y, "SHIELD BROKE", "#43ff7a", 0.9);
             resetCombo();
-            // “empurra” nave um pouco
             ship.thrust.x *= -0.4;
             ship.thrust.y *= -0.4;
             break;
@@ -1738,7 +2293,6 @@
 
           resetCombo();
           explodeShip();
-          // pequeno split do asteroide atingido (clássico)
           destroyAsteroid(i, ship.x, ship.y);
           break;
         }
@@ -1750,11 +2304,9 @@
   // Render
   // =========================
   function draw() {
-    // clear
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canv.width, canv.height);
 
-    // screen shake translate
     ctx.save();
     if (game.shakeTime > 0) {
       game.shakeTime = Math.max(0, game.shakeTime - DT);
@@ -1766,7 +2318,6 @@
       if (game.shakeTime === 0) game.shakeMag = 0;
     }
 
-    // particles
     for (const p of game.particles) {
       const a = clamp(p.life / p.maxLife, 0, 1);
       ctx.fillStyle = withAlpha(p.color, 0.85 * a);
@@ -1775,7 +2326,6 @@
       ctx.fill();
     }
 
-    // asteroids (com leve glow por tamanho)
     for (const r of game.roids) {
       const isL = r.r >= Math.ceil(BASE.ROID_SIZE / 2);
       const isM =
@@ -1812,7 +2362,6 @@
       ctx.restore();
     }
 
-    // UFO
     if (game.ufo) {
       const u = game.ufo;
       ctx.save();
@@ -1837,7 +2386,6 @@
       ctx.restore();
     }
 
-    // UFO bullets
     for (const b of game.ufoBullets) {
       ctx.save();
       ctx.fillStyle = "rgba(255,43,214,0.9)";
@@ -1849,7 +2397,6 @@
       ctx.restore();
     }
 
-    // power drops
     for (const p of game.powerDrops) {
       ctx.save();
       ctx.strokeStyle = withAlpha(POWER[p.type].color, 0.9);
@@ -1869,7 +2416,6 @@
       ctx.restore();
     }
 
-    // lasers (trail + glow)
     for (const l of ship.lasers) {
       if (l.trail && l.trail.length > 1) {
         ctx.save();
@@ -1910,7 +2456,6 @@
       }
     }
 
-    // ship
     const blinkOn = ship.blinkNum % 2 === 0;
     const exploding = ship.explodeTime > 0;
 
@@ -1918,7 +2463,6 @@
       if (blinkOn && !ship.dead && game.state !== STATE.MENU) {
         drawShip(ship.x, ship.y, ship.a);
       }
-      // thruster flame
       if (ship.thrusting && blinkOn && !ship.dead) {
         ctx.save();
         ctx.fillStyle = "rgba(255, 80, 80, 0.95)";
@@ -1950,7 +2494,6 @@
         ctx.restore();
       }
     } else {
-      // explosion circles (mantém clássico) + já temos partículas
       ctx.save();
       ctx.fillStyle = "darkred";
       ctx.beginPath();
@@ -1975,7 +2518,6 @@
       ctx.restore();
     }
 
-    // floaters
     for (const f of game.floaters) {
       const a = clamp(f.life / f.maxLife, 0, 1);
       ctx.save();
@@ -1987,7 +2529,6 @@
       ctx.restore();
     }
 
-    // center messages
     if (game.state === STATE.COUNTDOWN) {
       const n = Math.ceil(game.countdown);
       drawCenterText(n > 0 ? String(n) : "GO!", 1.0, canv.height * 0.45);
@@ -2000,7 +2541,6 @@
 
     drawHUD();
 
-    // flash overlay
     if (game.flashAlpha > 0) {
       game.flashAlpha = Math.max(0, game.flashAlpha - 0.04);
       ctx.save();
@@ -2009,11 +2549,10 @@
       ctx.restore();
     }
 
-    ctx.restore(); // end shake transform
+    ctx.restore();
   }
 
   function withAlpha(color, a) {
-    // aceita hex simples
     if (color.startsWith("#")) {
       const hex = color.replace("#", "");
       const r = parseInt(
@@ -2030,7 +2569,6 @@
       );
       return `rgba(${r},${g},${b},${a})`;
     }
-    // rgba já vem pronto
     return color;
   }
 
@@ -2039,22 +2577,12 @@
   // =========================
   init();
 
-  // garante touch toggle em resize
   window.addEventListener("resize", refreshTouchVisibility);
 
-  // garante menu se perder foco
   window.addEventListener("blur", () => {
     if (game.state === STATE.PLAYING) {
       game.state = STATE.PAUSED;
       setOverlay(panelPause);
     }
   });
-
-  // inicia menu state
-  function showMenu() {
-    game.state = STATE.MENU;
-    setOverlay(panelMenu);
-    renderLeaderboard(leaderboardList);
-    renderPowerbar();
-  }
 })();

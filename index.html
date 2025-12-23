@@ -45,6 +45,10 @@
               <span class="hud-mini__label">DIFF</span>
               <span class="hud-mini__value" id="hudDiff">—</span>
             </div>
+            <div class="hud-mini__row">
+              <span class="hud-mini__label">NÚCLEOS</span>
+              <span class="hud-mini__value" id="hudCores">0</span>
+            </div>
           </div>
 
           <button
@@ -89,11 +93,11 @@
             automaticamente.
           </small>
         </div>
-        <small class="muted">v2.0</small>
+        <small class="muted">v2.1</small>
       </footer>
     </main>
 
-    <!-- Overlay: Menu / Pause / GameOver / Settings -->
+    <!-- Overlay: Menu / Pause / GameOver / Settings / Skills -->
     <div class="overlay hidden" id="overlay">
       <div
         class="panel hidden"
@@ -132,6 +136,7 @@
           <button class="btn btn--primary" id="btnPlay" type="button">
             JOGAR
           </button>
+          <button class="btn" id="btnSkills" type="button">SKILL TREE</button>
           <button class="btn" id="btnShowLeaderboard" type="button">
             RANKING
           </button>
@@ -199,6 +204,15 @@
             JOGAR DE NOVO
           </button>
           <button class="btn" id="btnBackMenu" type="button">MENU</button>
+        </div>
+
+        <div class="rewards" id="rewards">
+          <div class="rewards__title">RECOMPENSAS</div>
+          <div class="rewards__row">
+            <span>Núcleos obtidos nesta run</span>
+            <strong id="runCores">0</strong>
+          </div>
+          <ul class="rewards__list" id="runCoresBreakdown"></ul>
         </div>
 
         <div class="leaderboard" id="leaderboardGameOver">
@@ -272,6 +286,81 @@
           Observação: se você não tiver <code>sounds/siren.m4a</code>, o UFO
           funciona sem sirene.
         </small>
+      </div>
+
+      <div
+        class="panel hidden"
+        id="panelSkills"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Skill Tree"
+      >
+        <div class="panel__title">SKILL TREE</div>
+        <div class="panel__subtitle">
+          Núcleos são raros. Você ganha poucos por run — e pode ativar
+          <b>Contratos</b> para aumentar dificuldade e recompensa.
+        </div>
+
+        <div class="skillsTop">
+          <div class="skillsCurrency">
+            <span class="skillsCurrency__label">NÚCLEOS</span>
+            <span class="skillsCurrency__value" id="skillsCores">0</span>
+          </div>
+
+          <div class="skillsLegend">
+            <span class="legendDot legendDot--on"></span> Desbloqueado
+            <span class="legendDot legendDot--off"></span> Bloqueado
+            <span class="legendDot legendDot--ok"></span> Disponível
+          </div>
+        </div>
+
+        <div class="skillsLayout">
+          <div class="skillsTreeWrap">
+            <svg class="skillsLines" id="skillsLines" aria-hidden="true"></svg>
+            <div class="skillsGrid" id="skillsGrid"></div>
+          </div>
+
+          <aside class="skillsSide">
+            <div class="skillsCard">
+              <div class="skillsCard__title" id="skillTitle">
+                Selecione uma habilidade
+              </div>
+              <div class="skillsCard__desc" id="skillDesc">
+                Clique em um nó para ver detalhes.
+              </div>
+
+              <div class="skillsCard__meta">
+                <div>
+                  <span class="muted">Custo:</span> <b id="skillCost">—</b>
+                </div>
+                <div>
+                  <span class="muted">Tipo:</span> <b id="skillType">—</b>
+                </div>
+              </div>
+
+              <button
+                class="btn btn--primary"
+                id="btnUnlockSkill"
+                type="button"
+                disabled
+              >
+                DESBLOQUEAR
+              </button>
+              <small class="muted" id="skillHint">—</small>
+            </div>
+
+            <div class="skillsCard">
+              <div class="skillsCard__title">EFEITOS ATIVOS</div>
+              <div class="skillsCard__desc" id="activeMods">—</div>
+            </div>
+
+            <div class="panel__row">
+              <button class="btn" id="btnCloseSkills" type="button">
+                FECHAR
+              </button>
+            </div>
+          </aside>
+        </div>
       </div>
     </div>
 

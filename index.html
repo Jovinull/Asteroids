@@ -2,24 +2,121 @@
 <html lang="pt-br">
   <head>
     <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
     <title>Asteroids</title>
-    <style>
-      html,
-      body {
-        height: 100%;
-        margin: 0;
-        background: #000;
-        display: grid;
-        place-items: center;
-      }
-      canvas {
-        border: 1px solid rgba(255, 255, 255, 0.15);
-      }
-    </style>
+
+    <!-- (Opcional) fonte arcade. Se não carregar, cai no fallback sem quebrar nada. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="./styles.css" />
   </head>
 
   <body>
-    <canvas id="gameCanvas" width="700" height="500"></canvas>
+    <main class="app">
+      <header class="hud">
+        <div class="brand">
+          <div class="brand-top">
+            <span class="badge">ARCADE</span>
+            <h1 class="title">ASTEROIDS</h1>
+          </div>
+
+          <p class="subtitle">
+            <span class="chip"
+              >←/→ <span style="opacity: 0.7">girar</span></span
+            >
+            <span class="chip"
+              >↑ <span style="opacity: 0.7">impulso</span></span
+            >
+            <span class="chip"
+              >ESPAÇO <span style="opacity: 0.7">tiro</span></span
+            >
+          </p>
+        </div>
+
+        <div class="actions">
+          <button id="btnFullscreen" class="btn" type="button">
+            FULLSCREEN
+          </button>
+        </div>
+      </header>
+
+      <section class="cabinet">
+        <div class="frame">
+          <div class="bezel">
+            <canvas
+              id="gameCanvas"
+              width="700"
+              height="500"
+              tabindex="0"
+            ></canvas>
+            <div class="scanlines" aria-hidden="true"></div>
+            <div class="vignette" aria-hidden="true"></div>
+            <div class="glow-edge" aria-hidden="true"></div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <div class="left">
+          <small class="hint">
+            Dica: clique no jogo para garantir foco do teclado. (<span
+              class="kbd"
+              >Tab</span
+            >
+            também funciona)
+          </small>
+        </div>
+        <small style="opacity: 0.7">v1.0</small>
+      </footer>
+    </main>
+
+    <script>
+      // Botão fullscreen (não interfere no jogo)
+      (function () {
+        const btn = document.getElementById("btnFullscreen");
+        if (!btn || !document.documentElement.requestFullscreen) {
+          if (btn) btn.style.display = "none";
+          return;
+        }
+
+        function syncLabel() {
+          btn.textContent = document.fullscreenElement ? "SAIR" : "FULLSCREEN";
+        }
+
+        btn.addEventListener("click", async () => {
+          try {
+            if (!document.fullscreenElement) {
+              await document.documentElement.requestFullscreen();
+            } else {
+              await document.exitFullscreen();
+            }
+          } catch (_) {
+            // ignora
+          } finally {
+            syncLabel();
+          }
+        });
+
+        document.addEventListener("fullscreenchange", syncLabel);
+
+        // Foca o canvas ao clicar em qualquer lugar do bezel/frame
+        const canv = document.getElementById("gameCanvas");
+        const bezel = canv?.closest(".bezel");
+        bezel?.addEventListener("pointerdown", () => canv?.focus(), {
+          passive: true,
+        });
+
+        syncLabel();
+      })();
+    </script>
 
     <script>
       const FPS = 30; // frames per second

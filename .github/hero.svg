@@ -1,0 +1,202 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="320" viewBox="0 0 1200 320" role="img" aria-label="Asteroids banner animado">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#04040a"/>
+      <stop offset="1" stop-color="#070717"/>
+    </linearGradient>
+
+    <radialGradient id="nebula1" cx="70%" cy="15%" r="70%">
+      <stop offset="0" stop-color="#14143a" stop-opacity="1"/>
+      <stop offset="0.55" stop-color="#14143a" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="nebula2" cx="20%" cy="30%" r="70%">
+      <stop offset="0" stop-color="#1a0f2c" stop-opacity="1"/>
+      <stop offset="0.55" stop-color="#1a0f2c" stop-opacity="0"/>
+    </radialGradient>
+
+    <filter id="glowCyan" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="3" result="b"/>
+      <feColorMatrix in="b" type="matrix"
+        values="0 0 0 0 0.15
+                0 0 0 0 0.95
+                0 0 0 0 1
+                0 0 0 0.8 0"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="glowPink" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="3" result="b"/>
+      <feColorMatrix in="b" type="matrix"
+        values="0 0 0 0 1
+                0 0 0 0 0.17
+                0 0 0 0 0.84
+                0 0 0 0.8 0"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <style>
+      .title { font: 700 26px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; letter-spacing: .22em; }
+      .sub   { font: 500 12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; letter-spacing: .10em; opacity: .75; }
+
+      /* estrelas */
+      .star { opacity: .65; }
+      .s1 { animation: tw 2.4s ease-in-out infinite; }
+      .s2 { animation: tw 3.1s ease-in-out infinite; animation-delay: .4s; opacity:.45 }
+      .s3 { animation: tw 4.0s ease-in-out infinite; animation-delay: .9s; opacity:.35 }
+      @keyframes tw { 0%,100% { transform: scale(1); opacity: .55; } 50% { transform: scale(1.4); opacity: 1; } }
+
+      /* asteroides */
+      .roid { animation: drift 6.6s linear infinite; }
+      .roid2 { animation-duration: 8.3s; animation-delay: -2.5s; }
+      .roid3 { animation-duration: 10.2s; animation-delay: -5.2s; }
+      @keyframes drift {
+        from { transform: translateX(1260px) translateY(0px) rotate(0deg); }
+        to   { transform: translateX(-260px) translateY(0px) rotate(360deg); }
+      }
+
+      /* nave */
+      .ship { animation: bob 1.7s ease-in-out infinite; transform-origin: 210px 185px; }
+      @keyframes bob { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-6px); } }
+
+      /* jato */
+      .flame { animation: flame 0.18s ease-in-out infinite; transform-origin: 165px 188px; }
+      @keyframes flame { 0%,100% { transform: scaleX(1) scaleY(.92); opacity: .85; } 50% { transform: scaleX(1.08) scaleY(1.08); opacity: 1; } }
+
+      /* laser */
+      .laser { stroke-dasharray: 12 240; animation: laser 1.3s linear infinite; }
+      @keyframes laser { from { stroke-dashoffset: 0; opacity: 0.0; } 15% { opacity: 1; } to { stroke-dashoffset: -252; opacity: 0; } }
+
+      /* scanlines leve */
+      .scan { opacity: .10; animation: scan 2.2s linear infinite; }
+      @keyframes scan { 0%,100% { opacity: .10; } 50% { opacity: .06; } }
+    </style>
+  </defs>
+
+  <!-- background -->
+  <rect width="1200" height="320" fill="url(#bg)"/>
+  <rect width="1200" height="320" fill="url(#nebula1)" opacity=".9"/>
+  <rect width="1200" height="320" fill="url(#nebula2)" opacity=".8"/>
+
+  <!-- stars -->
+  <g fill="#ffffff">
+    <circle class="star s1" cx="70" cy="70" r="1.6"/>
+    <circle class="star s2" cx="140" cy="210" r="1.1"/>
+    <circle class="star s3" cx="220" cy="40" r="1.2"/>
+    <circle class="star s1" cx="340" cy="120" r="1.0"/>
+    <circle class="star s2" cx="480" cy="70" r="1.2"/>
+    <circle class="star s3" cx="560" cy="210" r="1.0"/>
+    <circle class="star s1" cx="690" cy="40" r="1.5"/>
+    <circle class="star s2" cx="760" cy="150" r="1.1"/>
+    <circle class="star s3" cx="890" cy="90" r="1.2"/>
+    <circle class="star s1" cx="1030" cy="60" r="1.3"/>
+    <circle class="star s2" cx="1120" cy="200" r="1.1"/>
+  </g>
+
+  <!-- title -->
+  <g transform="translate(40,38)">
+    <rect x="0" y="0" width="160" height="28" rx="14" fill="#27f3ff" opacity=".85"/>
+    <text x="18" y="20" class="sub" fill="#04040a">ARCADE</text>
+
+    <text x="190" y="22" class="title" fill="#ffffff" filter="url(#glowCyan)">ASTEROIDS</text>
+    <text x="190" y="46" class="sub" fill="#ffffff" opacity=".8">
+      TypeScript • Canvas • Power-ups • Skill Tree
+    </text>
+  </g>
+
+  <!-- moving asteroids layer -->
+  <g transform="translate(0,0)">
+    <!-- asteroid 1 -->
+    <g class="roid" transform="translate(0,0)">
+      <g transform="translate(0,0)">
+        <path d="M 0 -18 L 12 -12 L 18 2 L 9 16 L -10 18 L -18 6 L -14 -10 Z"
+              fill="none" stroke="rgba(200,210,215,.85)" stroke-width="2" filter="url(#glowCyan)"/>
+      </g>
+    </g>
+
+    <!-- asteroid 2 -->
+    <g class="roid roid2" transform="translate(0,0)">
+      <g transform="translate(0,0)">
+        <path d="M 0 -14 L 10 -10 L 14 0 L 7 12 L -8 14 L -14 5 L -11 -8 Z"
+              fill="none" stroke="rgba(255,43,214,.80)" stroke-width="2" filter="url(#glowPink)"/>
+      </g>
+    </g>
+
+    <!-- asteroid 3 -->
+    <g class="roid roid3" transform="translate(0,0)">
+      <g transform="translate(0,0)">
+        <path d="M 0 -10 L 8 -7 L 10 0 L 6 9 L -6 10 L -10 4 L -7 -6 Z"
+              fill="none" stroke="rgba(67,255,122,.80)" stroke-width="2" filter="url(#glowCyan)"/>
+      </g>
+    </g>
+  </g>
+
+  <!-- place asteroids on different lanes by wrapping groups -->
+  <g transform="translate(0,0)">
+    <g class="roid" style="animation-name: drift;">
+      <g transform="translate(0,120)">
+        <g transform="translate(0,0)">
+          <path d="M 0 -18 L 12 -12 L 18 2 L 9 16 L -10 18 L -18 6 L -14 -10 Z"
+                fill="none" stroke="rgba(200,210,215,.85)" stroke-width="2" filter="url(#glowCyan)"/>
+        </g>
+      </g>
+    </g>
+
+    <g class="roid roid2">
+      <g transform="translate(0,210)">
+        <path d="M 0 -14 L 10 -10 L 14 0 L 7 12 L -8 14 L -14 5 L -11 -8 Z"
+              fill="none" stroke="rgba(255,43,214,.80)" stroke-width="2" filter="url(#glowPink)"/>
+      </g>
+    </g>
+
+    <g class="roid roid3">
+      <g transform="translate(0,170)">
+        <path d="M 0 -10 L 8 -7 L 10 0 L 6 9 L -6 10 L -10 4 L -7 -6 Z"
+              fill="none" stroke="rgba(67,255,122,.80)" stroke-width="2" filter="url(#glowCyan)"/>
+      </g>
+    </g>
+  </g>
+
+  <!-- ship + flame + laser -->
+  <g class="ship">
+    <!-- flame -->
+    <g class="flame" filter="url(#glowPink)">
+      <path d="M 150 186 L 130 193 L 150 200 Z" fill="rgba(255,180,120,.95)"/>
+      <path d="M 150 186 L 135 193 L 150 200 Z" fill="rgba(255,43,214,.45)"/>
+    </g>
+
+    <!-- ship body -->
+    <path d="M 170 185 L 220 165 L 210 185 L 220 205 Z"
+          fill="none" stroke="rgba(255,255,255,.92)" stroke-width="3" filter="url(#glowCyan)"/>
+
+    <!-- cockpit dot -->
+    <circle cx="206" cy="185" r="2.2" fill="rgba(39,243,255,.9)" filter="url(#glowCyan)"/>
+  </g>
+
+  <!-- laser beam -->
+  <path class="laser" d="M 220 185 C 380 175, 540 178, 710 185"
+        fill="none" stroke="rgba(255,170,190,.9)" stroke-width="3" filter="url(#glowPink)"/>
+
+  <!-- subtle scanlines overlay -->
+  <g class="scan">
+    <rect x="0" y="0" width="1200" height="320" fill="none"/>
+    <path d="M0 12 H1200 M0 24 H1200 M0 36 H1200 M0 48 H1200 M0 60 H1200 M0 72 H1200 M0 84 H1200
+             M0 96 H1200 M0 108 H1200 M0 120 H1200 M0 132 H1200 M0 144 H1200 M0 156 H1200 M0 168 H1200
+             M0 180 H1200 M0 192 H1200 M0 204 H1200 M0 216 H1200 M0 228 H1200 M0 240 H1200 M0 252 H1200
+             M0 264 H1200 M0 276 H1200 M0 288 H1200 M0 300 H1200 M0 312 H1200"
+          stroke="rgba(255,255,255,.18)" stroke-width="1"/>
+  </g>
+
+  <!-- footer note -->
+  <g transform="translate(40,292)">
+    <text class="sub" fill="rgba(255,255,255,.78)">
+      Clique em JOGAR para iniciar o áudio • Local leaderboard • Meta progressão via núcleos
+    </text>
+  </g>
+</svg>

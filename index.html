@@ -2,20 +2,15 @@
 <html lang="pt-br">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, viewport-fit=cover"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Asteroids</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
 
-    <link rel="stylesheet" href="./styles.css" />
+    <!-- Vite pode servir CSS direto do /src -->
+    <link rel="stylesheet" href="/src/styles.css" />
   </head>
 
   <body>
@@ -51,29 +46,17 @@
             </div>
           </div>
 
-          <button
-            id="btnSettings"
-            class="btn"
-            type="button"
-            aria-label="Configurações"
-          >
+          <button id="btnSettings" class="btn" type="button" aria-label="Configurações">
             CONFIG
           </button>
-          <button id="btnFullscreen" class="btn" type="button">
-            FULLSCREEN
-          </button>
+          <button id="btnFullscreen" class="btn" type="button">FULLSCREEN</button>
         </div>
       </header>
 
       <section class="cabinet">
         <div class="frame">
           <div class="bezel">
-            <canvas
-              id="gameCanvas"
-              width="700"
-              height="500"
-              tabindex="0"
-            ></canvas>
+            <canvas id="gameCanvas" width="700" height="500" tabindex="0"></canvas>
 
             <!-- Camadas CRT -->
             <div class="scanlines" aria-hidden="true"></div>
@@ -89,8 +72,7 @@
       <footer class="footer">
         <div class="left">
           <small class="hint">
-            Clique no jogo pra focar o teclado. Em mobile, os botões aparecem
-            automaticamente.
+            Clique no jogo pra focar o teclado. Em mobile, os botões aparecem automaticamente.
           </small>
         </div>
         <small class="muted">v2.1</small>
@@ -99,13 +81,7 @@
 
     <!-- Overlay: Menu / Pause / GameOver / Settings / Skills -->
     <div class="overlay hidden" id="overlay">
-      <div
-        class="panel hidden"
-        id="panelMenu"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Menu"
-      >
+      <div class="panel hidden" id="panelMenu" role="dialog" aria-modal="true" aria-label="Menu">
         <div class="panel__title">ASTEROIDS</div>
         <div class="panel__subtitle">
           Pressione <span class="kbd">ESPAÇO</span> ou clique em “JOGAR”.
@@ -133,13 +109,9 @@
         </div>
 
         <div class="panel__row">
-          <button class="btn btn--primary" id="btnPlay" type="button">
-            JOGAR
-          </button>
+          <button class="btn btn--primary" id="btnPlay" type="button">JOGAR</button>
           <button class="btn" id="btnSkills" type="button">SKILL TREE</button>
-          <button class="btn" id="btnShowLeaderboard" type="button">
-            RANKING
-          </button>
+          <button class="btn" id="btnShowLeaderboard" type="button">RANKING</button>
         </div>
 
         <div class="divider"></div>
@@ -148,9 +120,7 @@
           <div><span class="kbd">←</span> <span class="kbd">→</span> girar</div>
           <div><span class="kbd">↑</span> impulso</div>
           <div><span class="kbd">ESPAÇO</span> atirar</div>
-          <div>
-            <span class="kbd">P</span>/<span class="kbd">ESC</span> pausa
-          </div>
+          <div><span class="kbd">P</span>/<span class="kbd">ESC</span> pausa</div>
           <div><span class="kbd">F</span> FPS (dev)</div>
         </div>
 
@@ -160,49 +130,31 @@
         </div>
 
         <div class="panel__foot">
-          <small class="muted"
-            >Dica: o áudio só começa depois que você iniciar (política do
-            browser).</small
-          >
+          <small class="muted">
+            Dica: o áudio só começa depois que você iniciar (política do browser).
+          </small>
         </div>
       </div>
 
-      <div
-        class="panel hidden"
-        id="panelPause"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Pausa"
-      >
+      <div class="panel hidden" id="panelPause" role="dialog" aria-modal="true" aria-label="Pausa">
         <div class="panel__title">PAUSADO</div>
         <div class="panel__subtitle">
-          Pressione <span class="kbd">P</span> ou
-          <span class="kbd">ESC</span> pra voltar.
+          Pressione <span class="kbd">P</span> ou <span class="kbd">ESC</span> pra voltar.
         </div>
 
         <div class="panel__row">
-          <button class="btn btn--primary" id="btnResume" type="button">
-            CONTINUAR
-          </button>
+          <button class="btn btn--primary" id="btnResume" type="button">CONTINUAR</button>
           <button class="btn" id="btnRestart" type="button">REINICIAR</button>
           <button class="btn" id="btnQuit" type="button">MENU</button>
         </div>
       </div>
 
-      <div
-        class="panel hidden"
-        id="panelGameOver"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Fim de jogo"
-      >
+      <div class="panel hidden" id="panelGameOver" role="dialog" aria-modal="true" aria-label="Fim de jogo">
         <div class="panel__title" id="gameOverTitle">GAME OVER</div>
         <div class="panel__subtitle" id="gameOverStats">—</div>
 
         <div class="panel__row">
-          <button class="btn btn--primary" id="btnAgain" type="button">
-            JOGAR DE NOVO
-          </button>
+          <button class="btn btn--primary" id="btnAgain" type="button">JOGAR DE NOVO</button>
           <button class="btn" id="btnBackMenu" type="button">MENU</button>
         </div>
 
@@ -221,13 +173,7 @@
         </div>
       </div>
 
-      <div
-        class="panel hidden"
-        id="panelSettings"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Configurações"
-      >
+      <div class="panel hidden" id="panelSettings" role="dialog" aria-modal="true" aria-label="Configurações">
         <div class="panel__title">CONFIGURAÇÕES</div>
 
         <div class="settings">
@@ -243,26 +189,12 @@
 
           <label class="field">
             <span class="field__label">Volume Música</span>
-            <input
-              class="range"
-              id="rngMusic"
-              type="range"
-              min="0"
-              max="1"
-              step="0.01"
-            />
+            <input class="range" id="rngMusic" type="range" min="0" max="1" step="0.01" />
           </label>
 
           <label class="field">
             <span class="field__label">Volume SFX</span>
-            <input
-              class="range"
-              id="rngSfx"
-              type="range"
-              min="0"
-              max="1"
-              step="0.01"
-            />
+            <input class="range" id="rngSfx" type="range" min="0" max="1" step="0.01" />
           </label>
 
           <label class="toggle">
@@ -277,28 +209,19 @@
         </div>
 
         <div class="panel__row">
-          <button class="btn btn--primary" id="btnCloseSettings" type="button">
-            FECHAR
-          </button>
+          <button class="btn btn--primary" id="btnCloseSettings" type="button">FECHAR</button>
         </div>
 
         <small class="muted">
-          Observação: se você não tiver <code>sounds/siren.m4a</code>, o UFO
-          funciona sem sirene.
+          Observação: se você não tiver <code>sounds/siren.m4a</code>, o UFO funciona sem sirene.
         </small>
       </div>
 
-      <div
-        class="panel hidden"
-        id="panelSkills"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Skill Tree"
-      >
+      <div class="panel hidden" id="panelSkills" role="dialog" aria-modal="true" aria-label="Skill Tree">
         <div class="panel__title">SKILL TREE</div>
         <div class="panel__subtitle">
-          Núcleos são raros. Você ganha poucos por run — e pode ativar
-          <b>Contratos</b> para aumentar dificuldade e recompensa.
+          Núcleos são raros. Você ganha poucos por run — e pode ativar <b>Contratos</b> para aumentar
+          dificuldade e recompensa.
         </div>
 
         <div class="skillsTop">
@@ -322,28 +245,15 @@
 
           <aside class="skillsSide">
             <div class="skillsCard">
-              <div class="skillsCard__title" id="skillTitle">
-                Selecione uma habilidade
-              </div>
-              <div class="skillsCard__desc" id="skillDesc">
-                Clique em um nó para ver detalhes.
-              </div>
+              <div class="skillsCard__title" id="skillTitle">Selecione uma habilidade</div>
+              <div class="skillsCard__desc" id="skillDesc">Clique em um nó para ver detalhes.</div>
 
               <div class="skillsCard__meta">
-                <div>
-                  <span class="muted">Custo:</span> <b id="skillCost">—</b>
-                </div>
-                <div>
-                  <span class="muted">Tipo:</span> <b id="skillType">—</b>
-                </div>
+                <div><span class="muted">Custo:</span> <b id="skillCost">—</b></div>
+                <div><span class="muted">Tipo:</span> <b id="skillType">—</b></div>
               </div>
 
-              <button
-                class="btn btn--primary"
-                id="btnUnlockSkill"
-                type="button"
-                disabled
-              >
+              <button class="btn btn--primary" id="btnUnlockSkill" type="button" disabled>
                 DESBLOQUEAR
               </button>
               <small class="muted" id="skillHint">—</small>
@@ -355,9 +265,7 @@
             </div>
 
             <div class="panel__row">
-              <button class="btn" id="btnCloseSkills" type="button">
-                FECHAR
-              </button>
+              <button class="btn" id="btnCloseSkills" type="button">FECHAR</button>
             </div>
           </aside>
         </div>
@@ -367,31 +275,18 @@
     <!-- Controles touch -->
     <div class="touch hidden" id="touch">
       <div class="touch__left">
-        <button class="touch__btn" id="btnLeft" aria-label="Girar esquerda">
-          ⟵
-        </button>
-        <button class="touch__btn" id="btnRight" aria-label="Girar direita">
-          ⟶
-        </button>
+        <button class="touch__btn" id="btnLeft" aria-label="Girar esquerda">⟵</button>
+        <button class="touch__btn" id="btnRight" aria-label="Girar direita">⟶</button>
       </div>
       <div class="touch__right">
-        <button
-          class="touch__btn touch__btn--big"
-          id="btnThrust"
-          aria-label="Impulso"
-        >
-          ▲
-        </button>
-        <button
-          class="touch__btn touch__btn--big touch__btn--fire"
-          id="btnFire"
-          aria-label="Atirar"
-        >
+        <button class="touch__btn touch__btn--big" id="btnThrust" aria-label="Impulso">▲</button>
+        <button class="touch__btn touch__btn--big touch__btn--fire" id="btnFire" aria-label="Atirar">
           ●
         </button>
       </div>
     </div>
 
-    <script src="./game.js"></script>
+    <!-- Vite entry -->
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

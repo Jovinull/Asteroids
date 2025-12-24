@@ -1,86 +1,298 @@
-(() => {
-  "use strict";
+export function bootGame(): void {
+  // =========================
+  // DOM helpers
+  // =========================
+  // TODO: refatorar para um módulo separado e sem unknown
+  function el<T extends Element = HTMLElement>(id: string): T {
+    const node = document.getElementById(id);
+    if (!node) throw new Error(`Elemento #${id} não encontrado no DOM.`);
+    return node as unknown as T;
+  }
 
   // =========================
   // Canvas / Context
   // =========================
-  /** @type {HTMLCanvasElement} */
-  const canv = document.getElementById("gameCanvas");
-  /** @type {CanvasRenderingContext2D} */
-  const ctx = canv.getContext("2d");
+  const canv = el<HTMLCanvasElement>("gameCanvas");
+  const _ctx = canv.getContext("2d");
+  if (!_ctx) throw new Error("Não foi possível obter o contexto 2D do canvas.");
+  // Alias não-nulo para o TypeScript “entender” dentro das funções
+  const ctx: CanvasRenderingContext2D = _ctx;
 
   // =========================
   // UI Elements
   // =========================
-  const overlay = document.getElementById("overlay");
-  const panelMenu = document.getElementById("panelMenu");
-  const panelPause = document.getElementById("panelPause");
-  const panelGameOver = document.getElementById("panelGameOver");
-  const panelSettings = document.getElementById("panelSettings");
-  const panelSkills = document.getElementById("panelSkills");
+  const overlay = el<HTMLDivElement>("overlay");
+  const panelMenu = el<HTMLDivElement>("panelMenu");
+  const panelPause = el<HTMLDivElement>("panelPause");
+  const panelGameOver = el<HTMLDivElement>("panelGameOver");
+  const panelSettings = el<HTMLDivElement>("panelSettings");
+  const panelSkills = el<HTMLDivElement>("panelSkills");
 
-  const btnFullscreen = document.getElementById("btnFullscreen");
-  const btnSettings = document.getElementById("btnSettings");
+  const btnFullscreen = el<HTMLButtonElement>("btnFullscreen");
+  const btnSettings = el<HTMLButtonElement>("btnSettings");
 
-  const selMode = document.getElementById("selMode");
-  const selDiff = document.getElementById("selDiff");
-  const btnPlay = document.getElementById("btnPlay");
-  const btnSkills = document.getElementById("btnSkills");
-  const btnShowLeaderboard = document.getElementById("btnShowLeaderboard");
-  const leaderboard = document.getElementById("leaderboard");
-  const leaderboardList = document.getElementById("leaderboardList");
-  const leaderboardList2 = document.getElementById("leaderboardList2");
+  const selMode = el<HTMLSelectElement>("selMode");
+  const selDiff = el<HTMLSelectElement>("selDiff");
+  const btnPlay = el<HTMLButtonElement>("btnPlay");
+  const btnSkills = el<HTMLButtonElement>("btnSkills");
+  const btnShowLeaderboard = el<HTMLButtonElement>("btnShowLeaderboard");
+  const leaderboard = el<HTMLDivElement>("leaderboard");
+  const leaderboardList = el<HTMLOListElement>("leaderboardList");
+  const leaderboardList2 = el<HTMLOListElement>("leaderboardList2");
 
-  const btnResume = document.getElementById("btnResume");
-  const btnRestart = document.getElementById("btnRestart");
-  const btnQuit = document.getElementById("btnQuit");
+  const btnResume = el<HTMLButtonElement>("btnResume");
+  const btnRestart = el<HTMLButtonElement>("btnRestart");
+  const btnQuit = el<HTMLButtonElement>("btnQuit");
 
-  const btnAgain = document.getElementById("btnAgain");
-  const btnBackMenu = document.getElementById("btnBackMenu");
-  const gameOverTitle = document.getElementById("gameOverTitle");
-  const gameOverStats = document.getElementById("gameOverStats");
+  const btnAgain = el<HTMLButtonElement>("btnAgain");
+  const btnBackMenu = el<HTMLButtonElement>("btnBackMenu");
+  const gameOverTitle = el<HTMLDivElement>("gameOverTitle");
+  const gameOverStats = el<HTMLDivElement>("gameOverStats");
 
-  const chkMusic = document.getElementById("chkMusic");
-  const chkSfx = document.getElementById("chkSfx");
-  const rngMusic = document.getElementById("rngMusic");
-  const rngSfx = document.getElementById("rngSfx");
-  const chkReduceFlashes = document.getElementById("chkReduceFlashes");
-  const chkTouch = document.getElementById("chkTouch");
-  const btnCloseSettings = document.getElementById("btnCloseSettings");
+  const chkMusic = el<HTMLInputElement>("chkMusic");
+  const chkSfx = el<HTMLInputElement>("chkSfx");
+  const rngMusic = el<HTMLInputElement>("rngMusic");
+  const rngSfx = el<HTMLInputElement>("rngSfx");
+  const chkReduceFlashes = el<HTMLInputElement>("chkReduceFlashes");
+  const chkTouch = el<HTMLInputElement>("chkTouch");
+  const btnCloseSettings = el<HTMLButtonElement>("btnCloseSettings");
 
-  const hudMode = document.getElementById("hudMode");
-  const hudDiff = document.getElementById("hudDiff");
-  const hudCores = document.getElementById("hudCores");
-  const powerbar = document.getElementById("powerbar");
+  const hudMode = el<HTMLSpanElement>("hudMode");
+  const hudDiff = el<HTMLSpanElement>("hudDiff");
+  const hudCores = el<HTMLSpanElement>("hudCores");
+  const powerbar = el<HTMLDivElement>("powerbar");
 
-  const touch = document.getElementById("touch");
-  const btnLeft = document.getElementById("btnLeft");
-  const btnRight = document.getElementById("btnRight");
-  const btnThrust = document.getElementById("btnThrust");
-  const btnFire = document.getElementById("btnFire");
+  const touch = el<HTMLDivElement>("touch");
+  const btnLeft = el<HTMLButtonElement>("btnLeft");
+  const btnRight = el<HTMLButtonElement>("btnRight");
+  const btnThrust = el<HTMLButtonElement>("btnThrust");
+  const btnFire = el<HTMLButtonElement>("btnFire");
 
   // Skill Tree UI
-  const btnCloseSkills = document.getElementById("btnCloseSkills");
-  const skillsCores = document.getElementById("skillsCores");
-  const skillsGrid = document.getElementById("skillsGrid");
-  const skillsLines = document.getElementById("skillsLines");
-  const skillTitle = document.getElementById("skillTitle");
-  const skillDesc = document.getElementById("skillDesc");
-  const skillCost = document.getElementById("skillCost");
-  const skillType = document.getElementById("skillType");
-  const btnUnlockSkill = document.getElementById("btnUnlockSkill");
-  const skillHint = document.getElementById("skillHint");
-  const activeModsEl = document.getElementById("activeMods");
+  const btnCloseSkills = el<HTMLButtonElement>("btnCloseSkills");
+  const skillsCores = el<HTMLSpanElement>("skillsCores");
+  const skillsGrid = el<HTMLDivElement>("skillsGrid");
+  const skillsLines = el<SVGSVGElement>("skillsLines");
+  const skillTitle = el<HTMLDivElement>("skillTitle");
+  const skillDesc = el<HTMLDivElement>("skillDesc");
+  const skillCost = el<HTMLSpanElement>("skillCost");
+  const skillType = el<HTMLSpanElement>("skillType");
+  const btnUnlockSkill = el<HTMLButtonElement>("btnUnlockSkill");
+  const skillHint = el<HTMLElement>("skillHint");
+  const activeModsEl = el<HTMLDivElement>("activeMods");
 
   // GameOver rewards UI
-  const runCoresEl = document.getElementById("runCores");
-  const runCoresBreakdownEl = document.getElementById("runCoresBreakdown");
+  const runCoresEl = el<HTMLElement>("runCores");
+  const runCoresBreakdownEl = el<HTMLUListElement>("runCoresBreakdown");
 
   // =========================
   // Core timing
   // =========================
   const FPS = 30;
   const DT = 1 / FPS;
+
+  // =========================
+  // Types
+  // =========================
+  type ModeKey = "classic" | "time_attack" | "one_life" | "endless";
+  type DiffKey = "easy" | "normal" | "hard";
+
+  type GameState = "menu" | "countdown" | "playing" | "paused" | "wave_clear" | "gameover";
+
+  type Vec2 = { x: number; y: number };
+
+  type Laser = {
+    x: number;
+    y: number;
+    xv: number;
+    yv: number;
+    dist: number;
+    explodeTime: number;
+    trail: Vec2[];
+    hit: boolean;
+  };
+
+  type Ship = {
+    x: number;
+    y: number;
+    r: number;
+    a: number;
+    rot: number;
+    rotTarget: number;
+    thrusting: boolean;
+    shooting: boolean;
+    thrust: Vec2;
+    canShoot: boolean;
+    shootCd: number;
+    lasers: Laser[];
+    dead: boolean;
+    explodeTime: number;
+    blinkNum: number;
+    blinkTime: number;
+    shield: number; // 0/1
+    tookHitGrace: number;
+  };
+
+  type Asteroid = {
+    x: number;
+    y: number;
+    r: number;
+    a: number;
+    vert: number;
+    offs: number[];
+    xv: number;
+    yv: number;
+  };
+
+  type Particle = {
+    x: number;
+    y: number;
+    xv: number;
+    yv: number;
+    life: number;
+    maxLife: number;
+    size: number;
+    color: string;
+  };
+
+  type Floater = {
+    x: number;
+    y: number;
+    text: string;
+    color: string;
+    life: number;
+    maxLife: number;
+    vy: number;
+  };
+
+  type PowerKey = "triple" | "shield" | "slow" | "rapid" | "score2x";
+  type ActivePowerKey = "triple" | "slow" | "rapid" | "score2x";
+
+  type PowerDrop = {
+    type: PowerKey;
+    x: number;
+    y: number;
+    r: number;
+    xv: number;
+    yv: number;
+    life: number;
+  };
+
+  type Ufo = {
+    small: boolean;
+    x: number;
+    y: number;
+    r: number;
+    dir: number;
+    xv: number;
+    shootT: number;
+    life: number;
+  };
+
+  type UfoBullet = {
+    x: number;
+    y: number;
+    r: number;
+    xv: number;
+    yv: number;
+    life: number;
+  };
+
+  type DiffConfig = {
+    label: string;
+    lives: number;
+    roidSpeed: number;
+    thrust: number;
+    friction: number;
+    maxSpeed: number;
+    ufoRate: number;
+  };
+
+  type Tuning = DiffConfig & {
+    extraRoidPerWave: number;
+
+    laserSpeed: number;
+    laserMax: number;
+    shootCdMul: number;
+
+    startShield: number;
+    invulnMul: number;
+
+    dropChanceMul: number;
+    powerDurMul: number;
+
+    coresYieldBonus: number;
+  };
+
+  type Settings = {
+    mode: ModeKey;
+    difficulty: DiffKey;
+    musicOn: boolean;
+    sfxOn: boolean;
+    musicVolume: number;
+    sfxVolume: number;
+    reduceFlashes: boolean;
+    forceTouch: boolean;
+    showFPS: boolean;
+  };
+
+  type Meta = {
+    cores: number;
+    unlocked: Record<string, boolean>;
+  };
+
+  type SkillMods = Partial<{
+    thrustMul: number;
+    frictionMul: number;
+    maxSpeedMul: number;
+
+    laserSpeedMul: number;
+    shootCdMul: number;
+    laserMaxAdd: number;
+    powerDurMul: number;
+
+    invulnMul: number;
+    dropChanceMul: number;
+    startShield: number;
+
+    roidSpeedMul: number;
+    ufoRateMul: number;
+    extraRoidPerWave: number;
+    coresYieldAdd: number;
+  }>;
+
+  type Skill = {
+    id: string;
+    name: string;
+    icon: string;
+    type: string;
+    cost: number;
+    req: string[];
+    desc: string;
+    mods: SkillMods;
+  };
+
+  type MetaMods = {
+    thrustMul: number;
+    frictionMul: number;
+    maxSpeedMul: number;
+
+    laserSpeedMul: number;
+    shootCdMul: number;
+    laserMaxAdd: number;
+    powerDurMul: number;
+
+    invulnMul: number;
+    dropChanceMul: number;
+    startShield: number;
+
+    roidSpeedMul: number;
+    ufoRateMul: number;
+    extraRoidPerWave: number;
+    coresYieldAdd: number;
+  };
+
+  type LeaderboardEntry = { score: number; date: string };
 
   // =========================
   // Gameplay base constants (ajustáveis)
@@ -97,17 +309,17 @@
     SHIP_BLINK_DUR: 0.11,
     SHIP_INV_DUR: 2.6,
     SHIP_EXPLODE_DUR: 0.35,
-    LASER_EXPLODE_DUR: 0.12,
-  };
+    LASER_EXPLODE_DUR: 0.12
+  } as const;
 
-  const MODES = {
+  const MODES: Record<ModeKey, { label: string; timeLimit: number | null }> = {
     classic: { label: "CLASSIC", timeLimit: null },
     time_attack: { label: "TIME", timeLimit: 120 },
     one_life: { label: "1LIFE", timeLimit: null },
-    endless: { label: "ENDLESS", timeLimit: null },
+    endless: { label: "ENDLESS", timeLimit: null }
   };
 
-  const DIFFS = {
+  const DIFFS: Record<DiffKey, DiffConfig> = {
     easy: {
       label: "EASY",
       lives: 4,
@@ -115,7 +327,7 @@
       thrust: 4.6,
       friction: 0.86,
       maxSpeed: 6.4,
-      ufoRate: 0.75,
+      ufoRate: 0.75
     },
     normal: {
       label: "NORMAL",
@@ -124,7 +336,7 @@
       thrust: 5.0,
       friction: 0.82,
       maxSpeed: 7.2,
-      ufoRate: 1.0,
+      ufoRate: 1.0
     },
     hard: {
       label: "HARD",
@@ -133,14 +345,14 @@
       thrust: 5.3,
       friction: 0.78,
       maxSpeed: 8.1,
-      ufoRate: 1.25,
-    },
+      ufoRate: 1.25
+    }
   };
 
   // =========================
   // Settings (mutáveis)
   // =========================
-  const settings = {
+  const settings: Settings = {
     mode: "classic",
     difficulty: "normal",
     musicOn: true,
@@ -149,7 +361,7 @@
     sfxVolume: 0.75,
     reduceFlashes: false,
     forceTouch: false,
-    showFPS: false,
+    showFPS: false
   };
 
   // =========================
@@ -157,36 +369,38 @@
   // =========================
   const META_KEY = "asteroids_meta_v1";
 
-  let meta = loadMeta();
+  let meta: Meta = loadMeta();
 
-  function loadMeta() {
+  function loadMeta(): Meta {
     try {
       const raw = localStorage.getItem(META_KEY);
       if (!raw) return { cores: 0, unlocked: { core: true } };
-      const parsed = JSON.parse(raw);
+      const parsed = JSON.parse(raw) as Partial<Meta>;
       return {
         cores: typeof parsed.cores === "number" ? parsed.cores : 0,
         unlocked:
           parsed.unlocked && typeof parsed.unlocked === "object"
-            ? parsed.unlocked
-            : { core: true },
+            ? (parsed.unlocked as Record<string, boolean>)
+            : { core: true }
       };
     } catch {
       return { cores: 0, unlocked: { core: true } };
     }
   }
 
-  function saveMeta() {
+  function saveMeta(): void {
     try {
       localStorage.setItem(META_KEY, JSON.stringify(meta));
-    } catch {}
+    } catch {
+      // ignore
+    }
   }
 
-  function hasSkill(id) {
+  function hasSkill(id: string): boolean {
     return !!meta.unlocked[id];
   }
 
-  const SKILLS = [
+  const SKILLS: Skill[] = [
     {
       id: "core",
       name: "Pilot Core",
@@ -195,7 +409,7 @@
       cost: 0,
       req: [],
       desc: "O núcleo do piloto. Libera a árvore.",
-      mods: {},
+      mods: {}
     },
 
     // Engenharia
@@ -207,7 +421,7 @@
       cost: 3,
       req: ["core"],
       desc: "+6% aceleração do impulso.",
-      mods: { thrustMul: 1.06 },
+      mods: { thrustMul: 1.06 }
     },
     {
       id: "thrusters2",
@@ -217,7 +431,7 @@
       cost: 6,
       req: ["thrusters1"],
       desc: "+10% aceleração do impulso.",
-      mods: { thrustMul: 1.1 },
+      mods: { thrustMul: 1.1 }
     },
     {
       id: "stabilizers",
@@ -227,7 +441,7 @@
       cost: 5,
       req: ["thrusters1"],
       desc: "Menos deriva (controle mais firme).",
-      mods: { frictionMul: 0.92 },
+      mods: { frictionMul: 0.92 }
     },
     {
       id: "overdrive",
@@ -237,7 +451,7 @@
       cost: 7,
       req: ["thrusters2"],
       desc: "+10% velocidade máxima.",
-      mods: { maxSpeedMul: 1.1 },
+      mods: { maxSpeedMul: 1.1 }
     },
 
     // Armas
@@ -249,7 +463,7 @@
       cost: 4,
       req: ["core"],
       desc: "+8% velocidade do laser.",
-      mods: { laserSpeedMul: 1.08 },
+      mods: { laserSpeedMul: 1.08 }
     },
     {
       id: "cooling",
@@ -259,7 +473,7 @@
       cost: 6,
       req: ["capacitors"],
       desc: "Menor cooldown de tiro.",
-      mods: { shootCdMul: 0.88 },
+      mods: { shootCdMul: 0.88 }
     },
     {
       id: "magazine",
@@ -269,7 +483,7 @@
       cost: 7,
       req: ["cooling"],
       desc: "+2 lasers simultâneos.",
-      mods: { laserMaxAdd: 2 },
+      mods: { laserMaxAdd: 2 }
     },
     {
       id: "powerMastery",
@@ -279,7 +493,7 @@
       cost: 6,
       req: ["capacitors"],
       desc: "Power-ups duram +20%.",
-      mods: { powerDurMul: 1.2 },
+      mods: { powerDurMul: 1.2 }
     },
 
     // Sobrevivência
@@ -291,7 +505,7 @@
       cost: 8,
       req: ["core"],
       desc: "Começa a run com 1 shield.",
-      mods: { startShield: 1 },
+      mods: { startShield: 1 }
     },
     {
       id: "blinkMatrix",
@@ -301,7 +515,7 @@
       cost: 6,
       req: ["shieldStart"],
       desc: "+12% invencibilidade pós-hit.",
-      mods: { invulnMul: 1.12 },
+      mods: { invulnMul: 1.12 }
     },
     {
       id: "salvage",
@@ -311,10 +525,10 @@
       cost: 6,
       req: ["shieldStart"],
       desc: "+20% chance de drop de power-up.",
-      mods: { dropChanceMul: 1.2 },
+      mods: { dropChanceMul: 1.2 }
     },
 
-    // Contratos (dificuldade por recompensa)
+    // Contratos
     {
       id: "contract1",
       name: "Contract I",
@@ -323,7 +537,7 @@
       cost: 5,
       req: ["core"],
       desc: "Asteroides +8% velozes. Núcleos +15%.",
-      mods: { roidSpeedMul: 1.08, coresYieldAdd: 0.15 },
+      mods: { roidSpeedMul: 1.08, coresYieldAdd: 0.15 }
     },
     {
       id: "contract2",
@@ -333,7 +547,7 @@
       cost: 7,
       req: ["contract1"],
       desc: "UFO aparece mais. Núcleos +20%.",
-      mods: { ufoRateMul: 1.2, coresYieldAdd: 0.2 },
+      mods: { ufoRateMul: 1.2, coresYieldAdd: 0.2 }
     },
     {
       id: "contract3",
@@ -343,12 +557,12 @@
       cost: 9,
       req: ["contract2"],
       desc: "Wave com +1 asteroide base. Núcleos +25%.",
-      mods: { extraRoidPerWave: 1, coresYieldAdd: 0.25 },
-    },
+      mods: { extraRoidPerWave: 1, coresYieldAdd: 0.25 }
+    }
   ];
 
-  function computeMetaMods() {
-    const mods = {
+  function computeMetaMods(): MetaMods {
+    const mods: MetaMods = {
       thrustMul: 1,
       frictionMul: 1,
       maxSpeedMul: 1,
@@ -365,12 +579,12 @@
       roidSpeedMul: 1,
       ufoRateMul: 1,
       extraRoidPerWave: 0,
-      coresYieldAdd: 0,
+      coresYieldAdd: 0
     };
 
     for (const s of SKILLS) {
       if (!hasSkill(s.id)) continue;
-      const m = s.mods || {};
+      const m = s.mods ?? {};
 
       if (m.thrustMul) mods.thrustMul *= m.thrustMul;
       if (m.frictionMul) mods.frictionMul *= m.frictionMul;
@@ -399,30 +613,66 @@
     return mods;
   }
 
-  function syncCoresUI() {
-    if (hudCores) hudCores.textContent = String(meta.cores);
-    if (skillsCores) skillsCores.textContent = String(meta.cores);
+  function syncCoresUI(): void {
+    hudCores.textContent = String(meta.cores);
+    skillsCores.textContent = String(meta.cores);
   }
 
   // =========================
   // Game State
   // =========================
-  const STATE = {
+  const STATE: Record<Uppercase<GameState>, GameState> = {
     MENU: "menu",
     COUNTDOWN: "countdown",
     PLAYING: "playing",
     PAUSED: "paused",
     WAVE_CLEAR: "wave_clear",
-    GAMEOVER: "gameover",
+    GAMEOVER: "gameover"
   };
 
-  const game = {
+  const game: {
+    state: GameState;
+    wave: number;
+    lives: number;
+    score: number;
+    best: number;
+    timeLeft: number | null;
+    roids: Asteroid[];
+    particles: Particle[];
+    floaters: Floater[];
+    powerDrops: PowerDrop[];
+    ufo: Ufo | null;
+    ufoBullets: UfoBullet[];
+    comboStreak: number;
+    comboMult: number;
+    comboTime: number;
+    shotsFired: number;
+    shotsHit: number;
+    hitStreak: number;
+    text: string;
+    textAlpha: number;
+    countdown: number;
+    flashAlpha: number;
+    shakeTime: number;
+    shakeMag: number;
+    musicReady: boolean;
+    ufoSpawnT: number;
+    fpsAcc: number;
+    fpsFrames: number;
+    fpsValue: number;
+
+    runDeaths: number;
+    runUfoKills: number;
+    runMaxCombo: number;
+
+    tuning: Tuning | null;
+  } = {
     state: STATE.MENU,
     wave: 0,
     lives: 3,
     score: 0,
     best: 0,
-    timeLeft: null, // para time attack
+    timeLeft: null,
     roids: [],
     particles: [],
     floaters: [],
@@ -447,72 +697,81 @@
     fpsFrames: 0,
     fpsValue: 0,
 
-    // meta-run stats
     runDeaths: 0,
     runUfoKills: 0,
     runMaxCombo: 1,
 
-    // tuning da run (diff + meta mods)
-    tuning: null,
+    tuning: null
   };
 
   // =========================
   // Audio helpers
   // =========================
-  function safePlay(audio) {
+  function safePlay(audio: HTMLMediaElement): void {
     try {
       const p = audio.play();
-      if (p && typeof p.catch === "function") p.catch(() => {});
-    } catch (_) {}
+      if (p && typeof (p as Promise<void>).catch === "function") {
+        (p as Promise<void>).catch(() => {});
+      }
+    } catch {
+      // ignore
+    }
   }
 
-  function Sound(src, maxStreams = 1, baseVol = 1.0) {
-    this.streamNum = 0;
-    this.baseVol = baseVol;
-    this.streams = [];
-    for (let i = 0; i < maxStreams; i++) {
-      const a = new Audio(src);
-      a.volume = clamp(baseVol * settings.sfxVolume, 0, 1);
-      this.streams.push(a);
+  class Sound {
+    private streamNum = 0;
+    private streams: HTMLAudioElement[] = [];
+
+    constructor(private src: string, private maxStreams = 1, private baseVol = 1.0) {
+      for (let i = 0; i < maxStreams; i++) {
+        const a = new Audio(src);
+        a.volume = clamp(baseVol * settings.sfxVolume, 0, 1);
+        this.streams.push(a);
+      }
     }
 
-    this.play = () => {
+    play(): void {
       if (!settings.sfxOn) return;
-      this.streamNum = (this.streamNum + 1) % maxStreams;
+      this.streamNum = (this.streamNum + 1) % this.maxStreams;
       const a = this.streams[this.streamNum];
       a.volume = clamp(this.baseVol * settings.sfxVolume, 0, 1);
       safePlay(a);
-    };
+    }
 
-    this.stop = () => {
+    stop(): void {
       const a = this.streams[this.streamNum];
       a.pause();
       a.currentTime = 0;
-    };
+    }
   }
 
-  function Music(srcLow, srcHigh) {
-    this.soundLow = new Audio(srcLow);
-    this.soundHigh = new Audio(srcHigh);
-    this.low = true;
-    this.tempo = 1.0;
-    this.beatTime = 0;
+  class Music {
+    private soundLow: HTMLAudioElement;
+    private soundHigh: HTMLAudioElement;
+    private low = true;
+    private tempo = 1.0;
+    private beatTime = 0;
 
-    this.syncVol = () => {
+    constructor(srcLow: string, srcHigh: string) {
+      this.soundLow = new Audio(srcLow);
+      this.soundHigh = new Audio(srcHigh);
+    }
+
+    syncVol(): void {
       const v = clamp(settings.musicVolume, 0, 1);
       this.soundLow.volume = settings.musicOn ? v : 0;
       this.soundHigh.volume = settings.musicOn ? v : 0;
-    };
+    }
 
-    this.play = () => {
+    play(): void {
       if (!settings.musicOn) return;
       this.syncVol();
       const a = this.low ? this.soundLow : this.soundHigh;
       safePlay(a);
       this.low = !this.low;
-    };
+    }
 
-    this.tick = () => {
+    tick(): void {
       if (!game.musicReady) return;
       if (this.beatTime === 0) {
         this.play();
@@ -520,11 +779,11 @@
       } else {
         this.beatTime--;
       }
-    };
+    }
 
-    this.setAsteroidRatio = (ratio) => {
+    setAsteroidRatio(ratio: number): void {
       this.tempo = 1.0 - 0.75 * (1.0 - ratio);
-    };
+    }
   }
 
   // SFX
@@ -541,17 +800,222 @@
   const ufoSiren = new Audio("sounds/siren.m4a");
   ufoSiren.loop = true;
 
-  function syncAllVolumes() {
+  function syncAllVolumes(): void {
     music.syncVol();
-    ufoSiren.volume = settings.sfxOn
-      ? clamp(0.28 * settings.sfxVolume, 0, 1)
-      : 0;
+    ufoSiren.volume = settings.sfxOn ? clamp(0.28 * settings.sfxVolume, 0, 1) : 0;
+  }
+
+  // =========================
+  // Utility
+  // =========================
+  function clamp(v: number, a: number, b: number): number {
+    return Math.max(a, Math.min(b, v));
+  }
+
+  function dist(x1: number, y1: number, x2: number, y2: number): number {
+    return Math.hypot(x2 - x1, y2 - y1);
+  }
+
+  function wrap(obj: { x: number; y: number; r: number }): void {
+    if (obj.x < 0 - obj.r) obj.x = canv.width + obj.r;
+    else if (obj.x > canv.width + obj.r) obj.x = 0 - obj.r;
+
+    if (obj.y < 0 - obj.r) obj.y = canv.height + obj.r;
+    else if (obj.y > canv.height + obj.r) obj.y = 0 - obj.r;
+  }
+
+  function setOverlay(panel?: HTMLDivElement): void {
+    overlay.classList.remove("hidden");
+    panelMenu.classList.add("hidden");
+    panelPause.classList.add("hidden");
+    panelGameOver.classList.add("hidden");
+    panelSettings.classList.add("hidden");
+    panelSkills.classList.add("hidden");
+
+    if (panel) panel.classList.remove("hidden");
+  }
+
+  function hideOverlay(): void {
+    overlay.classList.add("hidden");
+    panelMenu.classList.add("hidden");
+    panelPause.classList.add("hidden");
+    panelGameOver.classList.add("hidden");
+    panelSettings.classList.add("hidden");
+    panelSkills.classList.add("hidden");
+  }
+
+  function modeKey(): string {
+    return `asteroids_lb_${settings.mode}_${settings.difficulty}`;
+  }
+
+  function loadLeaderboard(): LeaderboardEntry[] {
+    try {
+      const raw = localStorage.getItem(modeKey());
+      const arr = raw ? (JSON.parse(raw) as unknown) : [];
+      return Array.isArray(arr) ? (arr as LeaderboardEntry[]) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveLeaderboard(score: number): void {
+    const now = new Date();
+    const entry: LeaderboardEntry = { score, date: now.toISOString().slice(0, 10) };
+    const lb = loadLeaderboard();
+    lb.push(entry);
+    lb.sort((a, b) => b.score - a.score);
+    const top10 = lb.slice(0, 10);
+    localStorage.setItem(modeKey(), JSON.stringify(top10));
+  }
+
+  function renderLeaderboard(listEl: HTMLOListElement): void {
+    const lb = loadLeaderboard();
+    listEl.innerHTML = "";
+    if (lb.length === 0) {
+      const li = document.createElement("li");
+      li.textContent = "Sem registros ainda.";
+      listEl.appendChild(li);
+      return;
+    }
+    for (const e of lb) {
+      const li = document.createElement("li");
+      li.textContent = `${e.score} pts — ${e.date}`;
+      listEl.appendChild(li);
+    }
+  }
+
+  function updateBest(): void {
+    if (game.score > game.best) {
+      game.best = game.score;
+      localStorage.setItem("highscore", String(game.best));
+    }
+  }
+
+  // =========================
+  // Visual FX
+  // =========================
+  function spawnParticles(
+    x: number,
+    y: number,
+    count: number,
+    color: string,
+    baseSpeed: number,
+    lifeMin: number,
+    lifeMax: number,
+    sizeMin: number,
+    sizeMax: number
+  ): void {
+    for (let i = 0; i < count; i++) {
+      const ang = Math.random() * Math.PI * 2;
+      const spd = baseSpeed * (0.35 + Math.random() * 0.9);
+      const life = lifeMin + Math.random() * (lifeMax - lifeMin);
+      const size = sizeMin + Math.random() * (sizeMax - sizeMin);
+      game.particles.push({
+        x,
+        y,
+        xv: (Math.cos(ang) * spd) / FPS,
+        yv: (Math.sin(ang) * spd) / FPS,
+        life,
+        maxLife: life,
+        size,
+        color
+      });
+    }
+  }
+
+  function addFloater(x: number, y: number, text: string, color = "white", life = 0.9): void {
+    game.floaters.push({
+      x,
+      y,
+      text,
+      color,
+      life,
+      maxLife: life,
+      vy: -22 / FPS
+    });
+  }
+
+  function doShake(mag: number, t: number): void {
+    if (settings.reduceFlashes) return;
+    game.shakeMag = Math.max(game.shakeMag, mag);
+    game.shakeTime = Math.max(game.shakeTime, t);
+  }
+
+  function doFlash(alpha: number): void {
+    if (settings.reduceFlashes) return;
+    game.flashAlpha = Math.max(game.flashAlpha, alpha);
+  }
+
+  // =========================
+  // Powerups
+  // =========================
+  const POWER: Record<PowerKey, { label: string; dur: number; color: string }> = {
+    triple: { label: "TRIPLE", dur: 8, color: "#27f3ff" },
+    shield: { label: "SHIELD", dur: 0, color: "#43ff7a" },
+    slow: { label: "SLOW", dur: 4, color: "#ff2bd6" },
+    rapid: { label: "RAPID", dur: 8, color: "#ffd166" },
+    score2x: { label: "SCORE x2", dur: 10, color: "#a8ff3e" }
+  };
+
+  const activePower: Record<ActivePowerKey, number> = {
+    triple: 0,
+    slow: 0,
+    rapid: 0,
+    score2x: 0
+  };
+
+  const activePowerMax: Record<ActivePowerKey, number> = {
+    triple: POWER.triple.dur,
+    slow: POWER.slow.dur,
+    rapid: POWER.rapid.dur,
+    score2x: POWER.score2x.dur
+  };
+
+  function powerScoreMult(): number {
+    return activePower.score2x > 0 ? 2 : 1;
+  }
+
+  function timeScale(): number {
+    return activePower.slow > 0 ? 0.55 : 1.0;
+  }
+
+  function rapidFireCd(): number {
+    const base = activePower.rapid > 0 ? 0.1 : 0.22;
+    const mul = game.tuning?.shootCdMul ?? 1;
+    return base * mul;
+  }
+
+  function dropPowerup(x: number, y: number): void {
+    const baseChance = 0.14 + Math.min(0.06, game.wave * 0.004);
+    const mul = game.tuning?.dropChanceMul ?? 1;
+    const chance = clamp(baseChance * mul, 0, 0.35);
+    if (Math.random() > chance) return;
+
+    const roll = Math.random();
+    let type: PowerKey = "triple";
+    if (roll < 0.2) type = "shield";
+    else if (roll < 0.45) type = "triple";
+    else if (roll < 0.62) type = "rapid";
+    else if (roll < 0.8) type = "score2x";
+    else type = "slow";
+
+    game.powerDrops.push({
+      type,
+      x,
+      y,
+      r: 10,
+      xv: ((Math.random() * 20) / FPS) * (Math.random() < 0.5 ? 1 : -1),
+      yv: ((Math.random() * 24) / FPS) * (Math.random() < 0.5 ? 1 : -1),
+      life: 9
+    });
+
+    addFloater(x, y, POWER[type].label, POWER[type].color, 0.8);
   }
 
   // =========================
   // Entities
   // =========================
-  function newShip() {
+  function newShip(): Ship {
     const invMul = game.tuning?.invulnMul ?? 1;
     const invDur = BASE.SHIP_INV_DUR * invMul;
     const blinkDur = BASE.SHIP_BLINK_DUR;
@@ -573,33 +1037,27 @@
       explodeTime: 0,
       blinkNum: Math.ceil(invDur / blinkDur),
       blinkTime: Math.ceil(blinkDur * FPS),
-      shield: 0, // 0/1
-      tookHitGrace: 0, // pequeno “coyote time” pós-hit
+      shield: 0,
+      tookHitGrace: 0
     };
   }
 
-  let ship = newShip();
+  let ship: Ship = newShip();
 
-  function newAsteroid(x, y, r, speedMult = 1) {
+  function newAsteroid(x: number, y: number, r: number, speedMult = 1): Asteroid {
     const diff = DIFFS[settings.difficulty];
     const baseSpd = game.tuning?.roidSpeed ?? diff.roidSpeed;
     const lvlMult = 1 + 0.085 * game.wave;
 
-    const roid = {
+    const roid: Asteroid = {
       x,
       y,
       r,
       a: Math.random() * Math.PI * 2,
-      vert: Math.floor(
-        Math.random() * (BASE.ROIDS_VERT + 1) + BASE.ROIDS_VERT / 2
-      ),
+      vert: Math.floor(Math.random() * (BASE.ROIDS_VERT + 1) + BASE.ROIDS_VERT / 2),
       offs: [],
-      xv:
-        ((Math.random() * baseSpd * lvlMult * speedMult) / FPS) *
-        (Math.random() < 0.5 ? 1 : -1),
-      yv:
-        ((Math.random() * baseSpd * lvlMult * speedMult) / FPS) *
-        (Math.random() < 0.5 ? 1 : -1),
+      xv: ((Math.random() * baseSpd * lvlMult * speedMult) / FPS) * (Math.random() < 0.5 ? 1 : -1),
+      yv: ((Math.random() * baseSpd * lvlMult * speedMult) / FPS) * (Math.random() < 0.5 ? 1 : -1)
     };
 
     for (let i = 0; i < roid.vert; i++) {
@@ -608,214 +1066,7 @@
     return roid;
   }
 
-  // =========================
-  // Utility
-  // =========================
-  function clamp(v, a, b) {
-    return Math.max(a, Math.min(b, v));
-  }
-
-  function dist(x1, y1, x2, y2) {
-    return Math.hypot(x2 - x1, y2 - y1);
-  }
-
-  function wrap(obj) {
-    if (obj.x < 0 - obj.r) obj.x = canv.width + obj.r;
-    else if (obj.x > canv.width + obj.r) obj.x = 0 - obj.r;
-
-    if (obj.y < 0 - obj.r) obj.y = canv.height + obj.r;
-    else if (obj.y > canv.height + obj.r) obj.y = 0 - obj.r;
-  }
-
-  function setOverlay(panel) {
-    overlay.classList.remove("hidden");
-    panelMenu.classList.add("hidden");
-    panelPause.classList.add("hidden");
-    panelGameOver.classList.add("hidden");
-    panelSettings.classList.add("hidden");
-    panelSkills.classList.add("hidden");
-
-    if (panel) panel.classList.remove("hidden");
-  }
-
-  function hideOverlay() {
-    overlay.classList.add("hidden");
-    panelMenu.classList.add("hidden");
-    panelPause.classList.add("hidden");
-    panelGameOver.classList.add("hidden");
-    panelSettings.classList.add("hidden");
-    panelSkills.classList.add("hidden");
-  }
-
-  function modeKey() {
-    return `asteroids_lb_${settings.mode}_${settings.difficulty}`;
-  }
-
-  function loadLeaderboard() {
-    try {
-      const raw = localStorage.getItem(modeKey());
-      const arr = raw ? JSON.parse(raw) : [];
-      return Array.isArray(arr) ? arr : [];
-    } catch {
-      return [];
-    }
-  }
-
-  function saveLeaderboard(score) {
-    const now = new Date();
-    const entry = { score, date: now.toISOString().slice(0, 10) };
-    const lb = loadLeaderboard();
-    lb.push(entry);
-    lb.sort((a, b) => b.score - a.score);
-    const top10 = lb.slice(0, 10);
-    localStorage.setItem(modeKey(), JSON.stringify(top10));
-  }
-
-  function renderLeaderboard(listEl) {
-    const lb = loadLeaderboard();
-    listEl.innerHTML = "";
-    if (lb.length === 0) {
-      const li = document.createElement("li");
-      li.textContent = "Sem registros ainda.";
-      listEl.appendChild(li);
-      return;
-    }
-    for (const e of lb) {
-      const li = document.createElement("li");
-      li.textContent = `${e.score} pts — ${e.date}`;
-      listEl.appendChild(li);
-    }
-  }
-
-  function updateBest() {
-    if (game.score > game.best) {
-      game.best = game.score;
-      localStorage.setItem("highscore", String(game.best));
-    }
-  }
-
-  // =========================
-  // Visual FX (particles / shake / flash / floaters)
-  // =========================
-  function spawnParticles(
-    x,
-    y,
-    count,
-    color,
-    baseSpeed,
-    lifeMin,
-    lifeMax,
-    sizeMin,
-    sizeMax
-  ) {
-    for (let i = 0; i < count; i++) {
-      const ang = Math.random() * Math.PI * 2;
-      const spd = baseSpeed * (0.35 + Math.random() * 0.9);
-      game.particles.push({
-        x,
-        y,
-        xv: (Math.cos(ang) * spd) / FPS,
-        yv: (Math.sin(ang) * spd) / FPS,
-        life: lifeMin + Math.random() * (lifeMax - lifeMin),
-        maxLife: 0,
-        size: sizeMin + Math.random() * (sizeMax - sizeMin),
-        color,
-      });
-      game.particles[game.particles.length - 1].maxLife =
-        game.particles[game.particles.length - 1].life;
-    }
-  }
-
-  function addFloater(x, y, text, color = "white", life = 0.9) {
-    game.floaters.push({
-      x,
-      y,
-      text,
-      color,
-      life,
-      maxLife: life,
-      vy: -22 / FPS,
-    });
-  }
-
-  function doShake(mag, t) {
-    if (settings.reduceFlashes) return;
-    game.shakeMag = Math.max(game.shakeMag, mag);
-    game.shakeTime = Math.max(game.shakeTime, t);
-  }
-
-  function doFlash(alpha) {
-    if (settings.reduceFlashes) return;
-    game.flashAlpha = Math.max(game.flashAlpha, alpha);
-  }
-
-  // =========================
-  // Powerups
-  // =========================
-  const POWER = {
-    triple: { label: "TRIPLE", dur: 8, color: "#27f3ff" },
-    shield: { label: "SHIELD", dur: 0, color: "#43ff7a" }, // 1 hit
-    slow: { label: "SLOW", dur: 4, color: "#ff2bd6" },
-    rapid: { label: "RAPID", dur: 8, color: "#ffd166" },
-    score2x: { label: "SCORE x2", dur: 10, color: "#a8ff3e" },
-  };
-
-  const activePower = {
-    triple: 0,
-    slow: 0,
-    rapid: 0,
-    score2x: 0,
-  };
-
-  const activePowerMax = {
-    triple: POWER.triple.dur,
-    slow: POWER.slow.dur,
-    rapid: POWER.rapid.dur,
-    score2x: POWER.score2x.dur,
-  };
-
-  function powerScoreMult() {
-    return activePower.score2x > 0 ? 2 : 1;
-  }
-
-  function timeScale() {
-    return activePower.slow > 0 ? 0.55 : 1.0;
-  }
-
-  function rapidFireCd() {
-    const base = activePower.rapid > 0 ? 0.1 : 0.22; // segundos
-    const mul = game.tuning?.shootCdMul ?? 1;
-    return base * mul;
-  }
-
-  function dropPowerup(x, y) {
-    const baseChance = 0.14 + Math.min(0.06, game.wave * 0.004);
-    const mul = game.tuning?.dropChanceMul ?? 1;
-    const chance = clamp(baseChance * mul, 0, 0.35);
-    if (Math.random() > chance) return;
-
-    const roll = Math.random();
-    let type = "triple";
-    if (roll < 0.2) type = "shield";
-    else if (roll < 0.45) type = "triple";
-    else if (roll < 0.62) type = "rapid";
-    else if (roll < 0.8) type = "score2x";
-    else type = "slow";
-
-    game.powerDrops.push({
-      type,
-      x,
-      y,
-      r: 10,
-      xv: ((Math.random() * 20) / FPS) * (Math.random() < 0.5 ? 1 : -1),
-      yv: ((Math.random() * 24) / FPS) * (Math.random() < 0.5 ? 1 : -1),
-      life: 9,
-    });
-
-    addFloater(x, y, POWER[type].label, POWER[type].color, 0.8);
-  }
-
-  function applyPowerup(type) {
+  function applyPowerup(type: PowerKey): void {
     fxPower.play();
 
     if (type === "shield") {
@@ -826,55 +1077,55 @@
 
     const durMul = game.tuning?.powerDurMul ?? 1;
     const max = POWER[type].dur * durMul;
-    activePowerMax[type] = max;
-    activePower[type] = Math.max(activePower[type], max);
+
+    const k = type as ActivePowerKey; // aqui só entram tipos com duração
+    activePowerMax[k] = max;
+    activePower[k] = Math.max(activePower[k], max);
 
     addFloater(ship.x, ship.y, POWER[type].label + "!", POWER[type].color, 0.9);
   }
 
-  function renderPowerbar() {
-    const items = [];
-    for (const [k, t] of Object.entries(activePower)) {
-      if (t > 0)
+  function renderPowerbar(): void {
+    const items: Array<{ key: ActivePowerKey; time: number; max: number; label: string }> = [];
+
+    for (const k of Object.keys(activePower) as ActivePowerKey[]) {
+      const t = activePower[k];
+      if (t > 0) {
         items.push({
           key: k,
           time: t,
           max: activePowerMax[k] || POWER[k].dur,
-          label: POWER[k].label,
+          label: POWER[k].label
         });
+      }
     }
+
     powerbar.innerHTML = "";
     if (items.length === 0) return;
 
     for (const it of items) {
-      const el = document.createElement("div");
-      el.className = "pu";
-      el.innerHTML = `
+      const elDiv = document.createElement("div");
+      elDiv.className = "pu";
+      elDiv.innerHTML = `
         <div class="pu__name">${it.label}</div>
-        <div class="pu__bar"><div class="pu__fill" style="width:${Math.round(
-          (it.time / it.max) * 100
-        )}%"></div></div>
+        <div class="pu__bar"><div class="pu__fill" style="width:${Math.round((it.time / it.max) * 100)}%"></div></div>
       `;
-      powerbar.appendChild(el);
+      powerbar.appendChild(elDiv);
     }
   }
 
   // =========================
   // UFO
   // =========================
-  function getUfoRate() {
+  function getUfoRate(): number {
     return game.tuning?.ufoRate ?? DIFFS[settings.difficulty].ufoRate;
   }
 
-  function spawnUfo() {
+  function spawnUfo(): void {
     const dir = Math.random() < 0.5 ? 1 : -1;
     const small = Math.random() < 0.55;
 
-    const y = clamp(
-      60 + Math.random() * (canv.height - 120),
-      60,
-      canv.height - 60
-    );
+    const y = clamp(60 + Math.random() * (canv.height - 120), 60, canv.height - 60);
     const x = dir === 1 ? -40 : canv.width + 40;
 
     const baseV = small ? 110 : 80;
@@ -888,30 +1139,28 @@
       dir,
       xv: v * dir,
       shootT: 0.9 + Math.random() * 0.8,
-      life: 12,
+      life: 12
     };
 
     ufoSiren.currentTime = 0;
-    ufoSiren.volume = settings.sfxOn
-      ? clamp(0.28 * settings.sfxVolume, 0, 1)
-      : 0;
+    ufoSiren.volume = settings.sfxOn ? clamp(0.28 * settings.sfxVolume, 0, 1) : 0;
     safePlay(ufoSiren);
 
     addFloater(canv.width / 2, 90, "UFO!", "#ff2bd6", 0.9);
   }
 
-  function despawnUfo() {
+  function despawnUfo(): void {
     game.ufo = null;
     game.ufoBullets.length = 0;
     ufoSiren.pause();
     ufoSiren.currentTime = 0;
   }
 
-  function ufoScore() {
+  function ufoScore(): number {
     return game.ufo?.small ? 250 : 150;
   }
 
-  function ufoShoot() {
+  function ufoShoot(): void {
     if (!game.ufo) return;
     const u = game.ufo;
 
@@ -923,7 +1172,7 @@
       r: 3.5,
       xv: Math.cos(ang) * spd,
       yv: Math.sin(ang) * spd,
-      life: 2.8,
+      life: 2.8
     });
   }
 
@@ -933,7 +1182,7 @@
   let roidsTotal = 0;
   let roidsLeft = 0;
 
-  function wavePattern(w) {
+  function wavePattern(w: number): { large: number; med: number; small: number } {
     const m = w % 4;
     if (m === 0) return { large: 1, med: 3, small: 6 };
     if (m === 1) return { large: 3, med: 0, small: 2 };
@@ -941,7 +1190,7 @@
     return { large: 2, med: 2, small: 4 };
   }
 
-  function createWave() {
+  function createWave(): void {
     game.roids = [];
     const pat = wavePattern(game.wave);
     const L = Math.ceil(BASE.ROID_SIZE / 2);
@@ -953,9 +1202,9 @@
     roidsTotal = total;
     roidsLeft = total;
 
-    function spawnCount(n, r, spdMult = 1) {
+    function spawnCount(n: number, r: number, spdMult = 1): void {
       for (let i = 0; i < n; i++) {
-        let x, y;
+        let x: number, y: number;
         do {
           x = Math.floor(Math.random() * canv.width);
           y = Math.floor(Math.random() * canv.height);
@@ -971,7 +1220,7 @@
 
     if (extra > 0) {
       for (let i = 0; i < extra; i++) {
-        let x, y;
+        let x: number, y: number;
         do {
           x = Math.floor(Math.random() * canv.width);
           y = Math.floor(Math.random() * canv.height);
@@ -983,7 +1232,7 @@
     music.setAsteroidRatio(1);
   }
 
-  function addScore(base, x = canv.width / 2, y = canv.height / 2) {
+  function addScore(base: number, x = canv.width / 2, y = canv.height / 2): void {
     const scoreMult = powerScoreMult() * game.comboMult;
     const add = Math.floor(base * scoreMult);
     game.score += add;
@@ -991,51 +1240,39 @@
     addFloater(x, y, `+${add}`, "white", 0.8);
   }
 
-  function bumpCombo() {
+  function bumpCombo(): void {
     game.comboStreak++;
     game.comboTime = 3.0;
     game.comboMult = clamp(1 + Math.floor(game.comboStreak / 3), 1, 5);
     game.runMaxCombo = Math.max(game.runMaxCombo, game.comboMult);
 
     if (game.comboStreak > 0 && game.comboStreak % 6 === 0) {
-      addFloater(
-        canv.width / 2,
-        canv.height * 0.35,
-        `COMBO x${game.comboMult}!`,
-        "#27f3ff",
-        1.1
-      );
+      addFloater(canv.width / 2, canv.height * 0.35, `COMBO x${game.comboMult}!`, "#27f3ff", 1.1);
     }
   }
 
-  function resetCombo() {
+  function resetCombo(): void {
     game.comboStreak = 0;
     game.comboMult = 1;
     game.comboTime = 0;
     game.hitStreak = 0;
   }
 
-  function precisionHit() {
+  function precisionHit(): void {
     game.shotsHit++;
     game.hitStreak++;
 
     if (game.hitStreak >= 5) {
       game.hitStreak = 0;
-      addFloater(
-        canv.width / 2,
-        canv.height * 0.33,
-        "PRECISION +150",
-        "#43ff7a",
-        1.0
-      );
+      addFloater(canv.width / 2, canv.height * 0.33, "PRECISION +150", "#43ff7a", 1.0);
       addScore(150, ship.x, ship.y);
     }
   }
 
   // =========================
-  // Destroy asteroid (splits + juice)
+  // Destroy asteroid
   // =========================
-  function destroyAsteroid(index, hitX, hitY) {
+  function destroyAsteroid(index: number, hitX?: number, hitY?: number): void {
     const roid = game.roids[index];
     const x = roid.x;
     const y = roid.y;
@@ -1045,29 +1282,17 @@
     doFlash(0.28);
 
     const sizeFactor = r / (BASE.ROID_SIZE / 2);
-    spawnParticles(
-      x,
-      y,
-      Math.floor(18 + 22 * sizeFactor),
-      "#cfd8dc",
-      220,
-      0.25,
-      0.7,
-      1.2,
-      2.6
-    );
+    spawnParticles(x, y, Math.floor(18 + 22 * sizeFactor), "#cfd8dc", 220, 0.25, 0.7, 1.2, 2.6);
 
     dropPowerup(x, y);
 
     if (r === Math.ceil(BASE.ROID_SIZE / 2)) addScore(20, hitX ?? x, hitY ?? y);
-    else if (r === Math.ceil(BASE.ROID_SIZE / 4))
-      addScore(50, hitX ?? x, hitY ?? y);
+    else if (r === Math.ceil(BASE.ROID_SIZE / 4)) addScore(50, hitX ?? x, hitY ?? y);
     else addScore(100, hitX ?? x, hitY ?? y);
 
     bumpCombo();
     precisionHit();
 
-    // split (ajusta roidsTotal/roidsLeft pro ritmo da música ficar correto)
     if (r === Math.ceil(BASE.ROID_SIZE / 2)) {
       game.roids.push(newAsteroid(x, y, Math.ceil(BASE.ROID_SIZE / 4), 1.05));
       game.roids.push(newAsteroid(x, y, Math.ceil(BASE.ROID_SIZE / 4), 1.05));
@@ -1092,28 +1317,8 @@
       game.textAlpha = 1.0;
       game.countdown = 3.0;
 
-      spawnParticles(
-        canv.width / 2,
-        canv.height / 2,
-        90,
-        "#27f3ff",
-        320,
-        0.25,
-        1.2,
-        1.2,
-        2.8
-      );
-      spawnParticles(
-        canv.width / 2,
-        canv.height / 2,
-        70,
-        "#ff2bd6",
-        300,
-        0.25,
-        1.0,
-        1.2,
-        2.6
-      );
+      spawnParticles(canv.width / 2, canv.height / 2, 90, "#27f3ff", 320, 0.25, 1.2, 1.2, 2.8);
+      spawnParticles(canv.width / 2, canv.height / 2, 70, "#ff2bd6", 300, 0.25, 1.0, 1.2, 2.6);
 
       doShake(8, 0.25);
       doFlash(0.35);
@@ -1121,17 +1326,16 @@
   }
 
   // =========================
-  // Shooting (rapid/triple/trail/glow)
+  // Shooting
   // =========================
-  function shootLaser() {
+  function shootLaser(): void {
     if (ship.dead) return;
     if (ship.shootCd > 0) return;
 
     const maxLasers = game.tuning?.laserMax ?? BASE.LASER_MAX;
     if (ship.lasers.length >= maxLasers) return;
 
-    const baseCd = rapidFireCd();
-    ship.shootCd = baseCd;
+    ship.shootCd = rapidFireCd();
 
     const spread = activePower.triple > 0 ? [-0.14, 0, 0.14] : [0];
     for (const s of spread) {
@@ -1151,7 +1355,7 @@
         dist: 0,
         explodeTime: 0,
         trail: [{ x: lx, y: ly }],
-        hit: false,
+        hit: false
       });
       game.shotsFired++;
     }
@@ -1160,9 +1364,9 @@
   }
 
   // =========================
-  // Ship explode (juice pesado)
+  // Ship explode
   // =========================
-  function explodeShip() {
+  function explodeShip(): void {
     ship.explodeTime = Math.ceil(BASE.SHIP_EXPLODE_DUR * FPS);
     fxExplode.play();
 
@@ -1177,12 +1381,12 @@
   // =========================
   // Start / Reset / End
   // =========================
-  function loadBest() {
+  function loadBest(): void {
     const s = localStorage.getItem("highscore");
     game.best = s == null ? 0 : parseInt(s, 10);
   }
 
-  function resetRun() {
+  function resetRun(): void {
     const baseDiff = DIFFS[settings.difficulty];
     const metaMods = computeMetaMods();
 
@@ -1247,17 +1451,17 @@
       dropChanceMul: metaMods.dropChanceMul,
       powerDurMul: metaMods.powerDurMul,
 
-      coresYieldBonus: metaMods.coresYieldAdd,
+      coresYieldBonus: metaMods.coresYieldAdd
     };
 
     ship = newShip();
     if ((game.tuning.startShield ?? 0) > 0) ship.shield = 1;
 
-    game.ufoSpawnT = 6.5; // delay inicial
+    game.ufoSpawnT = 6.5;
     createWave();
   }
 
-  function startGameFromMenu() {
+  function startGameFromMenu(): void {
     game.musicReady = true;
 
     resetRun();
@@ -1273,8 +1477,8 @@
     syncCoresUI();
   }
 
-  function calcCoresEarned() {
-    const breakdown = [];
+  function calcCoresEarned(): { cores: number; breakdown: string[] } {
+    const breakdown: string[] = [];
     let cores = 0;
 
     const wave = game.wave + 1;
@@ -1347,7 +1551,7 @@
     return { cores, breakdown };
   }
 
-  function endGame(reason) {
+  function endGame(reason: "time" | "dead"): void {
     game.state = STATE.GAMEOVER;
     ship.dead = true;
 
@@ -1358,23 +1562,18 @@
     saveMeta();
     syncCoresUI();
 
-    if (runCoresEl) runCoresEl.textContent = String(earned.cores);
-    if (runCoresBreakdownEl) {
-      runCoresBreakdownEl.innerHTML = "";
-      for (const line of earned.breakdown) {
-        const li = document.createElement("li");
-        li.textContent = line;
-        runCoresBreakdownEl.appendChild(li);
-      }
+    runCoresEl.textContent = String(earned.cores);
+    runCoresBreakdownEl.innerHTML = "";
+    for (const line of earned.breakdown) {
+      const li = document.createElement("li");
+      li.textContent = line;
+      runCoresBreakdownEl.appendChild(li);
     }
 
     setOverlay(panelGameOver);
     renderLeaderboard(leaderboardList2);
 
-    const acc =
-      game.shotsFired > 0
-        ? Math.round((game.shotsHit / game.shotsFired) * 100)
-        : 0;
+    const acc = game.shotsFired > 0 ? Math.round((game.shotsHit / game.shotsFired) * 100) : 0;
     const modeLabel = MODES[settings.mode].label;
     const diffLabel = DIFFS[settings.difficulty].label;
 
@@ -1385,14 +1584,11 @@
   // =========================
   // Drawing helpers
   // =========================
-  function drawShip(x, y, a, colour = "white") {
+  function drawShip(x: number, y: number, a: number, colour = "white"): void {
     ctx.strokeStyle = colour;
     ctx.lineWidth = BASE.SHIP_SIZE / 20;
     ctx.beginPath();
-    ctx.moveTo(
-      x + (4 / 3) * ship.r * Math.cos(a),
-      y - (4 / 3) * ship.r * Math.sin(a)
-    );
+    ctx.moveTo(x + (4 / 3) * ship.r * Math.cos(a), y - (4 / 3) * ship.r * Math.sin(a));
     ctx.lineTo(
       x - ship.r * ((2 / 3) * Math.cos(a) + Math.sin(a)),
       y + ship.r * ((2 / 3) * Math.sin(a) - Math.cos(a))
@@ -1405,30 +1601,20 @@
     ctx.stroke();
   }
 
-  function drawHUD() {
+  function drawHUD(): void {
     ctx.textAlign = "right";
     ctx.textBaseline = "middle";
     ctx.fillStyle = "white";
     ctx.font = "24px dejavu sans mono";
-    ctx.fillText(
-      String(game.score),
-      canv.width - BASE.SHIP_SIZE / 2,
-      BASE.SHIP_SIZE
-    );
+    ctx.fillText(String(game.score), canv.width - BASE.SHIP_SIZE / 2, BASE.SHIP_SIZE);
 
     ctx.textAlign = "center";
     ctx.font = "18px dejavu sans mono";
     ctx.fillText("BEST " + game.best, canv.width / 2, BASE.SHIP_SIZE);
 
     for (let i = 0; i < game.lives; i++) {
-      const lifeColour =
-        ship.explodeTime > 0 && i === game.lives - 1 ? "red" : "white";
-      drawShip(
-        BASE.SHIP_SIZE + i * BASE.SHIP_SIZE * 1.2,
-        BASE.SHIP_SIZE,
-        0.5 * Math.PI,
-        lifeColour
-      );
+      const lifeColour = ship.explodeTime > 0 && i === game.lives - 1 ? "red" : "white";
+      drawShip(BASE.SHIP_SIZE + i * BASE.SHIP_SIZE * 1.2, BASE.SHIP_SIZE, 0.5 * Math.PI, lifeColour);
     }
 
     ctx.textAlign = "left";
@@ -1468,7 +1654,7 @@
     }
   }
 
-  function drawCenterText(msg, alpha, y) {
+  function drawCenterText(msg: string, alpha: number, y: number): void {
     if (!msg || alpha <= 0) return;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -1477,18 +1663,23 @@
     ctx.fillText(msg, canv.width / 2, y);
   }
 
+  function withAlpha(color: string, a: number): string {
+    if (color.startsWith("#")) {
+      const hex = color.replace("#", "");
+      const r = parseInt(hex.length === 3 ? hex[0] + hex[0] : hex.slice(0, 2), 16);
+      const g = parseInt(hex.length === 3 ? hex[1] + hex[1] : hex.slice(2, 4), 16);
+      const b = parseInt(hex.length === 3 ? hex[2] + hex[2] : hex.slice(4, 6), 16);
+      return `rgba(${r},${g},${b},${a})`;
+    }
+    return color;
+  }
+
   // =========================
   // Input
   // =========================
-  function preventScrollKeys(ev) {
-    const keys = [
-      "ArrowLeft",
-      "ArrowRight",
-      "ArrowUp",
-      " ",
-      "Spacebar",
-      "Escape",
-    ];
+  function preventScrollKeys(ev: KeyboardEvent): void {
+    const keys = ["ArrowLeft", "ArrowRight", "ArrowUp", " ", "Spacebar", "Escape"];
+    // eslint-disable-next-line deprecation/deprecation
     if (keys.includes(ev.key) || ev.keyCode === 32) ev.preventDefault();
   }
 
@@ -1511,14 +1702,10 @@
       return;
     }
 
-    if (
-      game.state !== STATE.PLAYING &&
-      game.state !== STATE.COUNTDOWN &&
-      game.state !== STATE.WAVE_CLEAR
-    )
-      return;
+    if (game.state !== STATE.PLAYING && game.state !== STATE.COUNTDOWN && game.state !== STATE.WAVE_CLEAR) return;
     if (ship.dead) return;
 
+    // eslint-disable-next-line deprecation/deprecation
     switch (ev.keyCode) {
       case 37:
         ship.rotTarget = ((BASE.TURN_SPEED_DEG / 180) * Math.PI) / FPS;
@@ -1540,6 +1727,7 @@
 
     if (ship.dead) return;
 
+    // eslint-disable-next-line deprecation/deprecation
     switch (ev.keyCode) {
       case 37:
       case 39:
@@ -1554,12 +1742,12 @@
     }
   });
 
-  function bindHold(btn, onDown, onUp) {
-    const down = (e) => {
+  function bindHold(btn: HTMLElement, onDown: () => void, onUp: () => void): void {
+    const down = (e: PointerEvent) => {
       e.preventDefault();
       onDown();
     };
-    const up = (e) => {
+    const up = (e: PointerEvent) => {
       e.preventDefault();
       onUp();
     };
@@ -1579,23 +1767,15 @@
     () => (ship.rotTarget = ((-BASE.TURN_SPEED_DEG / 180) * Math.PI) / FPS),
     () => (ship.rotTarget = 0)
   );
-  bindHold(
-    btnThrust,
-    () => (ship.thrusting = true),
-    () => (ship.thrusting = false)
-  );
-  bindHold(
-    btnFire,
-    () => (ship.shooting = true),
-    () => (ship.shooting = false)
-  );
+  bindHold(btnThrust, () => (ship.thrusting = true), () => (ship.thrusting = false));
+  bindHold(btnFire, () => (ship.shooting = true), () => (ship.shooting = false));
 
   canv.addEventListener("pointerdown", () => canv.focus(), { passive: true });
 
   // =========================
   // Pause / UI actions
   // =========================
-  function togglePause() {
+  function togglePause(): void {
     if (game.state === STATE.PLAYING) {
       game.state = STATE.PAUSED;
       setOverlay(panelPause);
@@ -1623,6 +1803,7 @@
   });
 
   btnPlay.addEventListener("click", startGameFromMenu);
+
   btnAgain.addEventListener("click", () => {
     hideOverlay();
     startGameFromMenu();
@@ -1637,11 +1818,10 @@
     renderLeaderboard(leaderboardList);
   });
 
-  // settings panel
   btnSettings.addEventListener("click", () => openSettings());
   btnCloseSettings.addEventListener("click", () => closeSettings());
 
-  function openSettings() {
+  function openSettings(): void {
     setOverlay(panelSettings);
     chkMusic.checked = settings.musicOn;
     chkSfx.checked = settings.sfxOn;
@@ -1652,12 +1832,10 @@
     syncAllVolumes();
   }
 
-  function closeSettings() {
-    if (game.state === STATE.MENU) {
-      setOverlay(panelMenu);
-    } else if (game.state === STATE.PAUSED) {
-      setOverlay(panelPause);
-    } else {
+  function closeSettings(): void {
+    if (game.state === STATE.MENU) setOverlay(panelMenu);
+    else if (game.state === STATE.PAUSED) setOverlay(panelPause);
+    else {
       hideOverlay();
       canv.focus();
     }
@@ -1692,45 +1870,44 @@
     refreshTouchVisibility();
   });
 
-  // mode/diff selects
   selMode.addEventListener("change", () => {
-    settings.mode = selMode.value;
+    const v = selMode.value as ModeKey;
+    settings.mode = v;
     hudMode.textContent = MODES[settings.mode].label;
     renderLeaderboard(leaderboardList);
   });
 
   selDiff.addEventListener("change", () => {
-    settings.difficulty = selDiff.value;
+    const v = selDiff.value as DiffKey;
+    settings.difficulty = v;
     hudDiff.textContent = DIFFS[settings.difficulty].label;
     renderLeaderboard(leaderboardList);
   });
 
-  function refreshTouchVisibility() {
-    const isCoarse =
-      window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+  function refreshTouchVisibility(): void {
+    const isCoarse = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
     const show = settings.forceTouch || isCoarse;
     touch.classList.toggle("hidden", !show);
   }
 
   // fullscreen
-  (function () {
-    if (!btnFullscreen || !document.documentElement.requestFullscreen) {
-      if (btnFullscreen) btnFullscreen.style.display = "none";
+  (() => {
+    if (!document.documentElement.requestFullscreen) {
+      btnFullscreen.style.display = "none";
       return;
     }
 
-    function syncLabel() {
-      btnFullscreen.textContent = document.fullscreenElement
-        ? "SAIR"
-        : "FULLSCREEN";
+    function syncLabel(): void {
+      btnFullscreen.textContent = document.fullscreenElement ? "SAIR" : "FULLSCREEN";
     }
 
     btnFullscreen.addEventListener("click", async () => {
       try {
-        if (!document.fullscreenElement)
-          await document.documentElement.requestFullscreen();
+        if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
         else await document.exitFullscreen();
-      } catch (_) {}
+      } catch {
+        // ignore
+      }
       syncLabel();
     });
 
@@ -1741,15 +1918,15 @@
   // =========================
   // Skill Tree UI
   // =========================
-  let selectedSkillId = null;
+  let selectedSkillId: string | null = null;
 
-  function canUnlockSkill(s) {
+  function canUnlockSkill(s: Skill): boolean {
     if (hasSkill(s.id)) return false;
     if (meta.cores < s.cost) return false;
     return (s.req || []).every(hasSkill);
   }
 
-  function renderActiveMods() {
+  function renderActiveMods(): void {
     const m = computeMetaMods();
     const parts = [
       `Thrust x${m.thrustMul.toFixed(2)}`,
@@ -1762,16 +1939,14 @@
       `Invuln x${m.invulnMul.toFixed(2)}`,
       `DropChance x${m.dropChanceMul.toFixed(2)}`,
       `StartShield +${m.startShield}`,
-      `Contracts: RoidSpeed x${m.roidSpeedMul.toFixed(
+      `Contracts: RoidSpeed x${m.roidSpeedMul.toFixed(2)}, UFO x${m.ufoRateMul.toFixed(
         2
-      )}, UFO x${m.ufoRateMul.toFixed(2)}, +Roid/Wave ${
-        m.extraRoidPerWave
-      }, CoresYield +${Math.round(m.coresYieldAdd * 100)}%`,
+      )}, +Roid/Wave ${m.extraRoidPerWave}, CoresYield +${Math.round(m.coresYieldAdd * 100)}%`
     ];
     activeModsEl.textContent = parts.join(" | ");
   }
 
-  function renderSkillTree() {
+  function renderSkillTree(): void {
     syncCoresUI();
     renderActiveMods();
 
@@ -1787,7 +1962,7 @@
         "skillNode",
         unlocked ? "skillNode--unlocked" : "skillNode--locked",
         available ? "skillNode--available" : "",
-        selectedSkillId === s.id ? "skillNode--selected" : "",
+        selectedSkillId === s.id ? "skillNode--selected" : ""
       ]
         .filter(Boolean)
         .join(" ");
@@ -1797,9 +1972,7 @@
       btn.innerHTML = `
         <div class="skillNode__icon">${s.icon}</div>
         <div class="skillNode__name">${s.name}</div>
-        <div class="skillNode__cost">${
-          unlocked ? "OWNED" : `CUSTO ${s.cost}`
-        }</div>
+        <div class="skillNode__cost">${unlocked ? "OWNED" : `CUSTO ${s.cost}`}</div>
       `;
 
       btn.addEventListener("click", () => selectSkill(s.id));
@@ -1809,7 +1982,7 @@
     requestAnimationFrame(drawSkillLines);
   }
 
-  function selectSkill(id) {
+  function selectSkill(id: string): void {
     selectedSkillId = id;
     const s = SKILLS.find((x) => x.id === id);
     if (!s) return;
@@ -1836,22 +2009,26 @@
     renderSkillTree();
   }
 
-  function drawSkillLines() {
+  function drawSkillLines(): void {
     skillsLines.innerHTML = "";
 
-    const wrap = skillsGrid;
-    const nodes = [...wrap.querySelectorAll(".skillNode")];
-    const rectWrap = wrap.getBoundingClientRect();
+    const wrapEl = skillsGrid;
+    const nodes = Array.from(wrapEl.querySelectorAll<HTMLButtonElement>(".skillNode"));
+    const rectWrap = wrapEl.getBoundingClientRect();
 
-    function centerOf(el) {
-      const r = el.getBoundingClientRect();
+    function centerOf(elBtn: HTMLElement): { x: number; y: number } {
+      const r = elBtn.getBoundingClientRect();
       return {
         x: r.left - rectWrap.left + r.width / 2,
-        y: r.top - rectWrap.top + r.height / 2,
+        y: r.top - rectWrap.top + r.height / 2
       };
     }
 
-    const map = new Map(nodes.map((n) => [n.dataset.skillId, n]));
+    const map = new Map<string, HTMLElement>();
+    for (const n of nodes) {
+      const id = n.dataset.skillId;
+      if (id) map.set(id, n);
+    }
 
     for (const s of SKILLS) {
       if (!s.req || s.req.length === 0) continue;
@@ -1866,14 +2043,9 @@
         const b = centerOf(toEl);
 
         const unlocked = hasSkill(s.id) && hasSkill(req);
-        const stroke = unlocked
-          ? "rgba(67,255,122,0.35)"
-          : "rgba(255,255,255,0.16)";
+        const stroke = unlocked ? "rgba(67,255,122,0.35)" : "rgba(255,255,255,0.16)";
 
-        const path = document.createElementNS(
-          "http://www.w3.org/2000/svg",
-          "path"
-        );
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
         const midX = (a.x + b.x) / 2;
         const d = `M ${a.x} ${a.y} C ${midX} ${a.y}, ${midX} ${b.y}, ${b.x} ${b.y}`;
         path.setAttribute("d", d);
@@ -1886,13 +2058,13 @@
     }
   }
 
-  function openSkills() {
+  function openSkills(): void {
     setOverlay(panelSkills);
     renderSkillTree();
     if (!selectedSkillId) selectSkill("core");
   }
 
-  function closeSkills() {
+  function closeSkills(): void {
     if (game.state === STATE.MENU) setOverlay(panelMenu);
     else if (game.state === STATE.PAUSED) setOverlay(panelPause);
     else hideOverlay();
@@ -1915,15 +2087,15 @@
   });
 
   // =========================
-  // Init
+  // Init / Menu
   // =========================
-  function init() {
+  function init(): void {
     loadBest();
     syncAllVolumes();
     refreshTouchVisibility();
 
-    settings.mode = selMode.value;
-    settings.difficulty = selDiff.value;
+    settings.mode = selMode.value as ModeKey;
+    settings.difficulty = selDiff.value as DiffKey;
 
     hudMode.textContent = MODES[settings.mode].label;
     hudDiff.textContent = DIFFS[settings.difficulty].label;
@@ -1935,7 +2107,7 @@
     setInterval(update, 1000 / FPS);
   }
 
-  function showMenu() {
+  function showMenu(): void {
     game.state = STATE.MENU;
     setOverlay(panelMenu);
     leaderboard.classList.add("hidden");
@@ -1952,7 +2124,7 @@
   // =========================
   // Update loop
   // =========================
-  function update() {
+  function update(): void {
     game.fpsAcc += DT;
     game.fpsFrames++;
     if (game.fpsAcc >= 1) {
@@ -1963,12 +2135,7 @@
 
     draw();
 
-    if (
-      game.state === STATE.PAUSED ||
-      game.state === STATE.MENU ||
-      game.state === STATE.GAMEOVER
-    )
-      return;
+    if (game.state === STATE.PAUSED || game.state === STATE.MENU || game.state === STATE.GAMEOVER) return;
 
     music.tick();
 
@@ -1989,13 +2156,7 @@
         createWave();
         game.state = STATE.COUNTDOWN;
         game.countdown = 3.0;
-        addFloater(
-          canv.width / 2,
-          canv.height * 0.42,
-          `WAVE ${game.wave + 1}`,
-          "#27f3ff",
-          1.2
-        );
+        addFloater(canv.width / 2, canv.height * 0.42, `WAVE ${game.wave + 1}`, "#27f3ff", 1.2);
       }
       return;
     }
@@ -2015,7 +2176,7 @@
       if (game.comboTime <= 0) resetCombo();
     }
 
-    for (const k of Object.keys(activePower)) {
+    for (const k of Object.keys(activePower) as ActivePowerKey[]) {
       if (activePower[k] > 0) activePower[k] = Math.max(0, activePower[k] - DT);
     }
     renderPowerbar();
@@ -2024,7 +2185,7 @@
     ship.shootCd = Math.max(0, ship.shootCd - DT);
     ship.tookHitGrace = Math.max(0, ship.tookHitGrace - DT);
 
-    const tun = game.tuning ?? DIFFS[settings.difficulty];
+    const tun = game.tuning ?? (DIFFS[settings.difficulty] as Tuning);
 
     if (ship.thrusting && !ship.dead) {
       ship.thrust.x += (tun.thrust * Math.cos(ship.a)) / FPS;
@@ -2074,6 +2235,7 @@
       }
     }
 
+    // lasers
     for (let i = ship.lasers.length - 1; i >= 0; i--) {
       const l = ship.lasers[i];
 
@@ -2105,12 +2267,14 @@
       else if (l.y > canv.height) l.y = 0;
     }
 
+    // roids
     for (const r of game.roids) {
       r.x += r.xv * ts;
       r.y += r.yv * ts;
       wrap(r);
     }
 
+    // particles
     for (let i = game.particles.length - 1; i >= 0; i--) {
       const p = game.particles[i];
       p.life -= DT;
@@ -2122,6 +2286,7 @@
       p.y += p.yv * ts;
     }
 
+    // floaters
     for (let i = game.floaters.length - 1; i >= 0; i--) {
       const f = game.floaters[i];
       f.life -= DT;
@@ -2132,6 +2297,7 @@
       f.y += f.vy * ts;
     }
 
+    // power drops
     for (let i = game.powerDrops.length - 1; i >= 0; i--) {
       const p = game.powerDrops[i];
       p.life -= DT;
@@ -2153,18 +2319,17 @@
       }
     }
 
+    // UFO spawn
     game.ufoSpawnT -= DT;
     if (!game.ufo && game.ufoSpawnT <= 0) {
       const next = 10 - Math.min(6, game.wave * 0.5);
       game.ufoSpawnT = clamp(next / getUfoRate(), 3.5, 12);
 
-      const chance =
-        0.25 +
-        Math.min(0.35, game.wave * 0.03) +
-        Math.min(0.2, game.score / 1200);
+      const chance = 0.25 + Math.min(0.35, game.wave * 0.03) + Math.min(0.2, game.score / 1200);
       if (Math.random() < chance) spawnUfo();
     }
 
+    // UFO update
     if (game.ufo) {
       const u = game.ufo;
       u.life -= DT;
@@ -2176,15 +2341,12 @@
         ufoShoot();
       }
 
-      if (
-        u.life <= 0 ||
-        (u.dir === 1 && u.x > canv.width + 60) ||
-        (u.dir === -1 && u.x < -60)
-      ) {
+      if (u.life <= 0 || (u.dir === 1 && u.x > canv.width + 60) || (u.dir === -1 && u.x < -60)) {
         despawnUfo();
       }
     }
 
+    // UFO bullets
     for (let i = game.ufoBullets.length - 1; i >= 0; i--) {
       const b = game.ufoBullets[i];
       b.life -= DT;
@@ -2200,12 +2362,7 @@
       if (b.y < 0) b.y = canv.height;
       else if (b.y > canv.height) b.y = 0;
 
-      if (
-        !ship.dead &&
-        ship.explodeTime === 0 &&
-        ship.blinkNum === 0 &&
-        ship.tookHitGrace <= 0
-      ) {
+      if (!ship.dead && ship.explodeTime === 0 && ship.blinkNum === 0 && ship.tookHitGrace <= 0) {
         if (dist(ship.x, ship.y, b.x, b.y) < ship.r + b.r) {
           game.ufoBullets.splice(i, 1);
           if (ship.shield > 0) {
@@ -2222,6 +2379,7 @@
       }
     }
 
+    // laser hits asteroid
     for (let i = game.roids.length - 1; i >= 0; i--) {
       const a = game.roids[i];
       for (let j = ship.lasers.length - 1; j >= 0; j--) {
@@ -2236,6 +2394,7 @@
       }
     }
 
+    // laser hits UFO
     if (game.ufo) {
       for (let j = ship.lasers.length - 1; j >= 0; j--) {
         const l = ship.lasers[j];
@@ -2246,17 +2405,7 @@
           doShake(9, 0.22);
           doFlash(0.35);
 
-          spawnParticles(
-            game.ufo.x,
-            game.ufo.y,
-            70,
-            "#ff2bd6",
-            360,
-            0.25,
-            1.1,
-            1.1,
-            2.8
-          );
+          spawnParticles(game.ufo.x, game.ufo.y, 70, "#ff2bd6", 360, 0.25, 1.1, 1.1, 2.8);
           addScore(ufoScore(), game.ufo.x, game.ufo.y);
           bumpCombo();
           precisionHit();
@@ -2270,12 +2419,8 @@
       }
     }
 
-    if (
-      !exploding &&
-      !ship.dead &&
-      ship.blinkNum === 0 &&
-      ship.tookHitGrace <= 0
-    ) {
+    // ship collides asteroid
+    if (!exploding && !ship.dead && ship.blinkNum === 0 && ship.tookHitGrace <= 0) {
       for (let i = 0; i < game.roids.length; i++) {
         const a = game.roids[i];
         if (dist(ship.x, ship.y, a.x, a.y) < ship.r + a.r) {
@@ -2303,7 +2448,7 @@
   // =========================
   // Render
   // =========================
-  function draw() {
+  function draw(): void {
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canv.width, canv.height);
 
@@ -2328,20 +2473,14 @@
 
     for (const r of game.roids) {
       const isL = r.r >= Math.ceil(BASE.ROID_SIZE / 2);
-      const isM =
-        r.r >= Math.ceil(BASE.ROID_SIZE / 4) &&
-        r.r < Math.ceil(BASE.ROID_SIZE / 2);
+      const isM = r.r >= Math.ceil(BASE.ROID_SIZE / 4) && r.r < Math.ceil(BASE.ROID_SIZE / 2);
 
       const stroke = isL
         ? "rgba(200,210,215,0.85)"
         : isM
         ? "rgba(190,200,210,0.85)"
         : "rgba(160,190,220,0.92)";
-      const glow = isL
-        ? "rgba(39,243,255,0.18)"
-        : isM
-        ? "rgba(255,43,214,0.14)"
-        : "rgba(67,255,122,0.14)";
+      const glow = isL ? "rgba(39,243,255,0.18)" : isM ? "rgba(255,43,214,0.14)" : "rgba(67,255,122,0.14)";
 
       ctx.save();
       ctx.strokeStyle = stroke;
@@ -2365,14 +2504,10 @@
     if (game.ufo) {
       const u = game.ufo;
       ctx.save();
-      ctx.strokeStyle = u.small
-        ? "rgba(255,43,214,0.9)"
-        : "rgba(39,243,255,0.9)";
+      ctx.strokeStyle = u.small ? "rgba(255,43,214,0.9)" : "rgba(39,243,255,0.9)";
       ctx.lineWidth = 2;
       ctx.shadowBlur = 14;
-      ctx.shadowColor = u.small
-        ? "rgba(255,43,214,0.35)"
-        : "rgba(39,243,255,0.30)";
+      ctx.shadowColor = u.small ? "rgba(255,43,214,0.35)" : "rgba(39,243,255,0.30)";
 
       ctx.beginPath();
       ctx.ellipse(u.x, u.y, u.r + 8, u.r, 0, 0, Math.PI * 2);
@@ -2473,20 +2608,13 @@
 
         ctx.beginPath();
         ctx.moveTo(
-          ship.x -
-            ship.r * ((2 / 3) * Math.cos(ship.a) + 0.5 * Math.sin(ship.a)),
-          ship.y +
-            ship.r * ((2 / 3) * Math.sin(ship.a) - 0.5 * Math.cos(ship.a))
+          ship.x - ship.r * ((2 / 3) * Math.cos(ship.a) + 0.5 * Math.sin(ship.a)),
+          ship.y + ship.r * ((2 / 3) * Math.sin(ship.a) - 0.5 * Math.cos(ship.a))
         );
+        ctx.lineTo(ship.x - ((ship.r * 6) / 3) * Math.cos(ship.a), ship.y + ((ship.r * 6) / 3) * Math.sin(ship.a));
         ctx.lineTo(
-          ship.x - ((ship.r * 6) / 3) * Math.cos(ship.a),
-          ship.y + ((ship.r * 6) / 3) * Math.sin(ship.a)
-        );
-        ctx.lineTo(
-          ship.x -
-            ship.r * ((2 / 3) * Math.cos(ship.a) - 0.5 * Math.sin(ship.a)),
-          ship.y +
-            ship.r * ((2 / 3) * Math.sin(ship.a) + 0.5 * Math.cos(ship.a))
+          ship.x - ship.r * ((2 / 3) * Math.cos(ship.a) - 0.5 * Math.sin(ship.a)),
+          ship.y + ship.r * ((2 / 3) * Math.sin(ship.a) + 0.5 * Math.cos(ship.a))
         );
         ctx.closePath();
         ctx.fill();
@@ -2552,26 +2680,6 @@
     ctx.restore();
   }
 
-  function withAlpha(color, a) {
-    if (color.startsWith("#")) {
-      const hex = color.replace("#", "");
-      const r = parseInt(
-        hex.length === 3 ? hex[0] + hex[0] : hex.slice(0, 2),
-        16
-      );
-      const g = parseInt(
-        hex.length === 3 ? hex[1] + hex[1] : hex.slice(2, 4),
-        16
-      );
-      const b = parseInt(
-        hex.length === 3 ? hex[2] + hex[2] : hex.slice(4, 6),
-        16
-      );
-      return `rgba(${r},${g},${b},${a})`;
-    }
-    return color;
-  }
-
   // =========================
   // Boot
   // =========================
@@ -2585,4 +2693,4 @@
       setOverlay(panelPause);
     }
   });
-})();
+}

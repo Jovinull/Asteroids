@@ -1,9 +1,9 @@
 import { defineConfig } from "vite";
 
-export default defineConfig({
-  base: "https://github.com/Jovinull/Asteroids",
+export default defineConfig(({ mode }) => ({
+  base: mode === "production" ? "/Asteroids/" : "/",
   server: {
     port: 5173,
     strictPort: true,
   },
-});
+}));

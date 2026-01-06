@@ -16,21 +16,37 @@ import type {
   GameRuntime,
   GameState,
   Laser,
-  Meta,
   ModeKey,
   Particle,
   PowerDrop,
   PowerKey,
   Settings,
   Ship,
-  Skill,
   Tuning,
   Ufo,
   UfoBullet,
 } from "./types";
-import { clamp, dist, preventScrollKeys, safePlay, withAlpha, wrap as wrapObj } from "./utils";
+
+import {
+  computeMetaMods,
+  hasSkill as hasSkillFn,
+  loadMeta,
+  saveMeta,
+  SKILLS,
+  type Meta,
+  type Skill,
+} from "./meta";
+
+import {
+  clamp,
+  dist,
+  preventScrollKeys,
+  safePlay,
+  withAlpha,
+  wrap as wrapObj,
+} from "./utils";
+
 import { createAudioSystem } from "./audio";
-import { computeMetaMods, hasSkill as hasSkillFn, loadMeta, saveMeta, SKILLS } from "./meta";
 import { renderLeaderboard, saveLeaderboard } from "./leaderboard";
 
 export function bootGame(): void {
@@ -201,7 +217,17 @@ export function bootGame(): void {
   // Audio
   // =========================
   const audio = createAudioSystem(settings);
-  const { fxExplode, fxHit, fxLaser, fxThrust, fxPower, fxUfoHit, music, ufoSiren, syncAllVolumes } = audio;
+  const {
+    fxExplode,
+    fxHit,
+    fxLaser,
+    fxThrust,
+    fxPower,
+    fxUfoHit,
+    music,
+    ufoSiren,
+    syncAllVolumes,
+  } = audio;
 
   // =========================
   // Utility: Overlay + Menu
@@ -265,7 +291,13 @@ export function bootGame(): void {
     }
   }
 
-  function addFloater(x: number, y: number, text: string, color = "white", life = 0.9): void {
+  function addFloater(
+    x: number,
+    y: number,
+    text: string,
+    color = "white",
+    life = 0.9
+  ): void {
     game.floaters.push({
       x,
       y,
@@ -378,7 +410,12 @@ export function bootGame(): void {
 
   let ship: Ship = newShip();
 
-  function newAsteroid(x: number, y: number, r: number, speedMult = 1): Asteroid {
+  function newAsteroid(
+    x: number,
+    y: number,
+    r: number,
+    speedMult = 1
+  ): Asteroid {
     const diff = DIFFS[settings.difficulty];
     const baseSpd = game.tuning?.roidSpeed ?? diff.roidSpeed;
     const lvlMult = 1 + 0.085 * game.wave;
@@ -388,10 +425,16 @@ export function bootGame(): void {
       y,
       r,
       a: Math.random() * Math.PI * 2,
-      vert: Math.floor(Math.random() * (BASE.ROIDS_VERT + 1) + BASE.ROIDS_VERT / 2),
+      vert: Math.floor(
+        Math.random() * (BASE.ROIDS_VERT + 1) + BASE.ROIDS_VERT / 2
+      ),
       offs: [],
-      xv: ((Math.random() * baseSpd * lvlMult * speedMult) / FPS) * (Math.random() < 0.5 ? 1 : -1),
-      yv: ((Math.random() * baseSpd * lvlMult * speedMult) / FPS) * (Math.random() < 0.5 ? 1 : -1),
+      xv:
+        ((Math.random() * baseSpd * lvlMult * speedMult) / FPS) *
+        (Math.random() < 0.5 ? 1 : -1),
+      yv:
+        ((Math.random() * baseSpd * lvlMult * speedMult) / FPS) *
+        (Math.random() < 0.5 ? 1 : -1),
     };
 
     for (let i = 0; i < roid.vert; i++) {
@@ -420,7 +463,12 @@ export function bootGame(): void {
   }
 
   function renderPowerbar(): void {
-    const items: Array<{ key: ActivePowerKey; time: number; max: number; label: string }> = [];
+    const items: Array<{
+      key: ActivePowerKey;
+      time: number;
+      max: number;
+      label: string;
+    }> = [];
 
     for (const k of ACTIVE_POWER_KEYS) {
       const t = activePower[k];
@@ -442,7 +490,9 @@ export function bootGame(): void {
       elDiv.className = "pu";
       elDiv.innerHTML = `
         <div class="pu__name">${it.label}</div>
-        <div class="pu__bar"><div class="pu__fill" style="width:${Math.round((it.time / it.max) * 100)}%"></div></div>
+        <div class="pu__bar"><div class="pu__fill" style="width:${Math.round(
+          (it.time / it.max) * 100
+        )}%"></div></div>
       `;
       powerbar.appendChild(elDiv);
     }
@@ -459,7 +509,11 @@ export function bootGame(): void {
     const dir = Math.random() < 0.5 ? 1 : -1;
     const small = Math.random() < 0.55;
 
-    const y = clamp(60 + Math.random() * (canv.height - 120), 60, canv.height - 60);
+    const y = clamp(
+      60 + Math.random() * (canv.height - 120),
+      60,
+      canv.height - 60
+    );
     const x = dir === 1 ? -40 : canv.width + 40;
 
     const baseV = small ? 110 : 80;
@@ -477,7 +531,9 @@ export function bootGame(): void {
     };
 
     ufoSiren.currentTime = 0;
-    ufoSiren.volume = settings.sfxOn ? clamp(0.28 * settings.sfxVolume, 0, 1) : 0;
+    ufoSiren.volume = settings.sfxOn
+      ? clamp(0.28 * settings.sfxVolume, 0, 1)
+      : 0;
     safePlay(ufoSiren);
 
     addFloater(canv.width / 2, 90, "UFO!", "#ff2bd6", 0.9);
@@ -516,7 +572,11 @@ export function bootGame(): void {
   let roidsTotal = 0;
   let roidsLeft = 0;
 
-  function wavePattern(w: number): { large: number; med: number; small: number } {
+  function wavePattern(w: number): {
+    large: number;
+    med: number;
+    small: number;
+  } {
     const m = w % 4;
     if (m === 0) return { large: 1, med: 3, small: 6 };
     if (m === 1) return { large: 3, med: 0, small: 2 };
@@ -566,7 +626,11 @@ export function bootGame(): void {
     music.setAsteroidRatio(1);
   }
 
-  function addScore(base: number, x = canv.width / 2, y = canv.height / 2): void {
+  function addScore(
+    base: number,
+    x = canv.width / 2,
+    y = canv.height / 2
+  ): void {
     const scoreMult = powerScoreMult() * game.comboMult;
     const add = Math.floor(base * scoreMult);
     game.score += add;
@@ -581,7 +645,13 @@ export function bootGame(): void {
     game.runMaxCombo = Math.max(game.runMaxCombo, game.comboMult);
 
     if (game.comboStreak > 0 && game.comboStreak % 6 === 0) {
-      addFloater(canv.width / 2, canv.height * 0.35, `COMBO x${game.comboMult}!`, "#27f3ff", 1.1);
+      addFloater(
+        canv.width / 2,
+        canv.height * 0.35,
+        `COMBO x${game.comboMult}!`,
+        "#27f3ff",
+        1.1
+      );
     }
   }
 
@@ -598,7 +668,13 @@ export function bootGame(): void {
 
     if (game.hitStreak >= 5) {
       game.hitStreak = 0;
-      addFloater(canv.width / 2, canv.height * 0.33, "PRECISION +150", "#43ff7a", 1.0);
+      addFloater(
+        canv.width / 2,
+        canv.height * 0.33,
+        "PRECISION +150",
+        "#43ff7a",
+        1.0
+      );
       addScore(150, ship.x, ship.y);
     }
   }
@@ -616,12 +692,23 @@ export function bootGame(): void {
     doFlash(0.28);
 
     const sizeFactor = r / (BASE.ROID_SIZE / 2);
-    spawnParticles(x, y, Math.floor(18 + 22 * sizeFactor), "#cfd8dc", 220, 0.25, 0.7, 1.2, 2.6);
+    spawnParticles(
+      x,
+      y,
+      Math.floor(18 + 22 * sizeFactor),
+      "#cfd8dc",
+      220,
+      0.25,
+      0.7,
+      1.2,
+      2.6
+    );
 
     dropPowerup(x, y);
 
     if (r === Math.ceil(BASE.ROID_SIZE / 2)) addScore(20, hitX ?? x, hitY ?? y);
-    else if (r === Math.ceil(BASE.ROID_SIZE / 4)) addScore(50, hitX ?? x, hitY ?? y);
+    else if (r === Math.ceil(BASE.ROID_SIZE / 4))
+      addScore(50, hitX ?? x, hitY ?? y);
     else addScore(100, hitX ?? x, hitY ?? y);
 
     bumpCombo();
@@ -651,8 +738,28 @@ export function bootGame(): void {
       game.textAlpha = 1.0;
       game.countdown = 3.0;
 
-      spawnParticles(canv.width / 2, canv.height / 2, 90, "#27f3ff", 320, 0.25, 1.2, 1.2, 2.8);
-      spawnParticles(canv.width / 2, canv.height / 2, 70, "#ff2bd6", 300, 0.25, 1.0, 1.2, 2.6);
+      spawnParticles(
+        canv.width / 2,
+        canv.height / 2,
+        90,
+        "#27f3ff",
+        320,
+        0.25,
+        1.2,
+        1.2,
+        2.8
+      );
+      spawnParticles(
+        canv.width / 2,
+        canv.height / 2,
+        70,
+        "#ff2bd6",
+        300,
+        0.25,
+        1.0,
+        1.2,
+        2.6
+      );
 
       doShake(8, 0.25);
       doFlash(0.35);
@@ -907,7 +1014,10 @@ export function bootGame(): void {
     setOverlay(panelGameOver);
     renderLeaderboard(leaderboardList2, settings);
 
-    const acc = game.shotsFired > 0 ? Math.round((game.shotsHit / game.shotsFired) * 100) : 0;
+    const acc =
+      game.shotsFired > 0
+        ? Math.round((game.shotsHit / game.shotsFired) * 100)
+        : 0;
     const modeLabel = MODES[settings.mode].label;
     const diffLabel = DIFFS[settings.difficulty].label;
 
@@ -922,7 +1032,10 @@ export function bootGame(): void {
     ctx.strokeStyle = colour;
     ctx.lineWidth = BASE.SHIP_SIZE / 20;
     ctx.beginPath();
-    ctx.moveTo(x + (4 / 3) * ship.r * Math.cos(a), y - (4 / 3) * ship.r * Math.sin(a));
+    ctx.moveTo(
+      x + (4 / 3) * ship.r * Math.cos(a),
+      y - (4 / 3) * ship.r * Math.sin(a)
+    );
     ctx.lineTo(
       x - ship.r * ((2 / 3) * Math.cos(a) + Math.sin(a)),
       y + ship.r * ((2 / 3) * Math.sin(a) - Math.cos(a))
@@ -940,15 +1053,25 @@ export function bootGame(): void {
     ctx.textBaseline = "middle";
     ctx.fillStyle = "white";
     ctx.font = "24px dejavu sans mono";
-    ctx.fillText(String(game.score), canv.width - BASE.SHIP_SIZE / 2, BASE.SHIP_SIZE);
+    ctx.fillText(
+      String(game.score),
+      canv.width - BASE.SHIP_SIZE / 2,
+      BASE.SHIP_SIZE
+    );
 
     ctx.textAlign = "center";
     ctx.font = "18px dejavu sans mono";
     ctx.fillText("BEST " + game.best, canv.width / 2, BASE.SHIP_SIZE);
 
     for (let i = 0; i < game.lives; i++) {
-      const lifeColour = ship.explodeTime > 0 && i === game.lives - 1 ? "red" : "white";
-      drawShip(BASE.SHIP_SIZE + i * BASE.SHIP_SIZE * 1.2, BASE.SHIP_SIZE, 0.5 * Math.PI, lifeColour);
+      const lifeColour =
+        ship.explodeTime > 0 && i === game.lives - 1 ? "red" : "white";
+      drawShip(
+        BASE.SHIP_SIZE + i * BASE.SHIP_SIZE * 1.2,
+        BASE.SHIP_SIZE,
+        0.5 * Math.PI,
+        lifeColour
+      );
     }
 
     ctx.textAlign = "left";
@@ -1019,7 +1142,12 @@ export function bootGame(): void {
       return;
     }
 
-    if (game.state !== STATE.PLAYING && game.state !== STATE.COUNTDOWN && game.state !== STATE.WAVE_CLEAR) return;
+    if (
+      game.state !== STATE.PLAYING &&
+      game.state !== STATE.COUNTDOWN &&
+      game.state !== STATE.WAVE_CLEAR
+    )
+      return;
     if (ship.dead) return;
 
     // eslint-disable-next-line deprecation/deprecation
@@ -1059,7 +1187,11 @@ export function bootGame(): void {
     }
   });
 
-  function bindHold(btn: HTMLElement, onDown: () => void, onUp: () => void): void {
+  function bindHold(
+    btn: HTMLElement,
+    onDown: () => void,
+    onUp: () => void
+  ): void {
     const down = (e: PointerEvent) => {
       e.preventDefault();
       onDown();
@@ -1084,8 +1216,16 @@ export function bootGame(): void {
     () => (ship.rotTarget = ((-BASE.TURN_SPEED_DEG / 180) * Math.PI) / FPS),
     () => (ship.rotTarget = 0)
   );
-  bindHold(btnThrust, () => (ship.thrusting = true), () => (ship.thrusting = false));
-  bindHold(btnFire, () => (ship.shooting = true), () => (ship.shooting = false));
+  bindHold(
+    btnThrust,
+    () => (ship.thrusting = true),
+    () => (ship.thrusting = false)
+  );
+  bindHold(
+    btnFire,
+    () => (ship.shooting = true),
+    () => (ship.shooting = false)
+  );
 
   canv.addEventListener("pointerdown", () => canv.focus(), { passive: true });
 
@@ -1202,7 +1342,8 @@ export function bootGame(): void {
   });
 
   function refreshTouchVisibility(): void {
-    const isCoarse = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+    const isCoarse =
+      window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
     const show = settings.forceTouch || isCoarse;
     touch.classList.toggle("hidden", !show);
   }
@@ -1215,12 +1356,15 @@ export function bootGame(): void {
     }
 
     function syncLabel(): void {
-      btnFullscreen.textContent = document.fullscreenElement ? "SAIR" : "FULLSCREEN";
+      btnFullscreen.textContent = document.fullscreenElement
+        ? "SAIR"
+        : "FULLSCREEN";
     }
 
     btnFullscreen.addEventListener("click", async () => {
       try {
-        if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+        if (!document.fullscreenElement)
+          await document.documentElement.requestFullscreen();
         else await document.exitFullscreen();
       } catch {
         // ignore
@@ -1233,14 +1377,146 @@ export function bootGame(): void {
   })();
 
   // =========================
-  // Skill Tree UI
+  // Skill Tree UI (GIGANTE: pan/zoom + busca) — SEM MINIMAP
   // =========================
   let selectedSkillId: string | null = null;
+
+  const skillsTreeWrap = el<HTMLDivElement>("skillsTreeWrap");
+  const skillSearch = el<HTMLInputElement>("skillSearch");
+  const skillsSearchResults = el<HTMLDivElement>("skillsSearchResults");
+  const btnSkillsFit = el<HTMLButtonElement>("btnSkillsFit");
+  const btnSkillsReset = el<HTMLButtonElement>("btnSkillsReset");
+  const btnSkillsZoomIn = el<HTMLButtonElement>("btnSkillsZoomIn");
+  const btnSkillsZoomOut = el<HTMLButtonElement>("btnSkillsZoomOut");
+
+  // Stage wrapper (vamos criar e mover skillsLines + skillsGrid pra dentro)
+  let stageEl: HTMLDivElement | null = null;
+
+  type ViewState = {
+    x: number;
+    y: number;
+    s: number;
+    minS: number;
+    maxS: number;
+    w: number;
+    h: number;
+    pad: number;
+  };
+
+  const view: ViewState = {
+    x: 0,
+    y: 0,
+    s: 1,
+    minS: 0.35,
+    maxS: 2.2,
+    w: 2800,
+    h: 1900,
+    pad: 240,
+  };
+
+  const skillsById = new Map<string, Skill>();
+  for (const sk of SKILLS) skillsById.set(sk.id, sk);
 
   function canUnlockSkill(s: Skill): boolean {
     if (hasSkill(s.id)) return false;
     if (meta.cores < s.cost) return false;
     return (s.req || []).every(hasSkill);
+  }
+
+  function skillLabel(id: string): string {
+    const s = skillsById.get(id);
+    return s ? s.name : id;
+  }
+
+  function ensureStage(): void {
+    if (stageEl) return;
+
+    const stage = document.createElement("div");
+    stage.className = "skillsStage";
+    stage.id = "skillsStage";
+
+    if (skillsLines.parentElement)
+      skillsLines.parentElement.removeChild(skillsLines);
+    if (skillsGrid.parentElement)
+      skillsGrid.parentElement.removeChild(skillsGrid);
+
+    stage.appendChild(skillsLines);
+    stage.appendChild(skillsGrid);
+
+    skillsTreeWrap.appendChild(stage);
+    stageEl = stage;
+
+    const xs = SKILLS.map((s) => s.x);
+    const ys = SKILLS.map((s) => s.y);
+    const minX = Math.min(...xs) - view.pad;
+    const maxX = Math.max(...xs) + view.pad;
+    const minY = Math.min(...ys) - view.pad;
+    const maxY = Math.max(...ys) + view.pad;
+
+    view.w = Math.max(1400, Math.ceil(maxX - minX));
+    view.h = Math.max(900, Math.ceil(maxY - minY));
+
+    stage.style.width = `${view.w}px`;
+    stage.style.height = `${view.h}px`;
+
+    skillsLines.setAttribute("viewBox", `0 0 ${view.w} ${view.h}`);
+    skillsLines.setAttribute("preserveAspectRatio", "none");
+  }
+
+  function clampView(): void {
+    const wrap = skillsTreeWrap.getBoundingClientRect();
+    const margin = 120;
+
+    const wScaled = view.w * view.s;
+    const hScaled = view.h * view.s;
+
+    const minX = wrap.width - wScaled - margin;
+    const maxX = margin;
+    const minY = wrap.height - hScaled - margin;
+    const maxY = margin;
+
+    view.x = clamp(view.x, minX, maxX);
+    view.y = clamp(view.y, minY, maxY);
+  }
+
+  function applyView(): void {
+    if (!stageEl) return;
+    clampView();
+    stageEl.style.transform = `translate(${view.x}px, ${view.y}px) scale(${view.s})`;
+  }
+
+  function fitAll(): void {
+    const wrap = skillsTreeWrap.getBoundingClientRect();
+    const sx = wrap.width / view.w;
+    const sy = wrap.height / view.h;
+    view.s = clamp(Math.min(sx, sy) * 0.92, view.minS, view.maxS);
+
+    view.x = (wrap.width - view.w * view.s) / 2;
+    view.y = (wrap.height - view.h * view.s) / 2;
+    applyView();
+  }
+
+  function focusSkill(id: string): void {
+    const s = skillsById.get(id);
+    if (!s) return;
+    const wrap = skillsTreeWrap.getBoundingClientRect();
+
+    view.x = wrap.width / 2 - s.x * view.s;
+    view.y = wrap.height / 2 - s.y * view.s;
+    applyView();
+  }
+
+  function ancestorsOf(id: string): Set<string> {
+    const out = new Set<string>();
+    const walk = (cur: string) => {
+      if (out.has(cur)) return;
+      out.add(cur);
+      const sk = skillsById.get(cur);
+      if (!sk?.req) return;
+      for (const r of sk.req) walk(r);
+    };
+    walk(id);
+    return out;
   }
 
   function renderActiveMods(): void {
@@ -1256,22 +1532,66 @@ export function bootGame(): void {
       `Invuln x${m.invulnMul.toFixed(2)}`,
       `DropChance x${m.dropChanceMul.toFixed(2)}`,
       `StartShield +${m.startShield}`,
-      `Contracts: RoidSpeed x${m.roidSpeedMul.toFixed(2)}, UFO x${m.ufoRateMul.toFixed(
+      `Contracts: RoidSpeed x${m.roidSpeedMul.toFixed(
         2
-      )}, +Roid/Wave ${m.extraRoidPerWave}, CoresYield +${Math.round(m.coresYieldAdd * 100)}%`,
+      )}, UFO x${m.ufoRateMul.toFixed(2)}, +Roid/Wave ${
+        m.extraRoidPerWave
+      }, CoresYield +${Math.round(m.coresYieldAdd * 100)}%`,
     ];
     activeModsEl.textContent = parts.join(" | ");
   }
 
+  function drawSkillLines(pathSet?: Set<string>): void {
+    skillsLines.innerHTML = "";
+
+    for (const s of SKILLS) {
+      if (!s.req || s.req.length === 0) continue;
+      for (const req of s.req) {
+        const a = skillsById.get(req);
+        const b = skillsById.get(s.id);
+        if (!a || !b) continue;
+
+        const bothUnlocked = hasSkill(a.id) && hasSkill(b.id);
+        const inPath = pathSet ? pathSet.has(a.id) && pathSet.has(b.id) : false;
+
+        const stroke = bothUnlocked
+          ? "rgba(67,255,122,0.35)"
+          : inPath
+          ? "rgba(39,243,255,0.26)"
+          : "rgba(255,255,255,0.14)";
+
+        const width = bothUnlocked ? "2.4" : inPath ? "2.2" : "2";
+
+        const midX = (a.x + b.x) / 2;
+        const d = `M ${a.x} ${a.y} C ${midX} ${a.y}, ${midX} ${b.y}, ${b.x} ${b.y}`;
+
+        const p = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "path"
+        );
+        p.setAttribute("d", d);
+        p.setAttribute("fill", "none");
+        p.setAttribute("stroke", stroke);
+        p.setAttribute("stroke-width", width);
+        p.setAttribute("stroke-linecap", "round");
+        skillsLines.appendChild(p);
+      }
+    }
+  }
+
   function renderSkillTree(): void {
+    ensureStage();
     syncCoresUI();
     renderActiveMods();
 
     skillsGrid.innerHTML = "";
 
+    const pathSet = selectedSkillId ? ancestorsOf(selectedSkillId) : undefined;
+
     for (const s of SKILLS) {
       const unlocked = hasSkill(s.id);
       const available = canUnlockSkill(s);
+      const selected = selectedSkillId === s.id;
 
       const btn = document.createElement("button");
       btn.type = "button";
@@ -1279,29 +1599,40 @@ export function bootGame(): void {
         "skillNode",
         unlocked ? "skillNode--unlocked" : "skillNode--locked",
         available ? "skillNode--available" : "",
-        selectedSkillId === s.id ? "skillNode--selected" : "",
+        selected ? "skillNode--selected" : "",
+        pathSet && pathSet.has(s.id) ? "skillNode--path" : "",
       ]
         .filter(Boolean)
         .join(" ");
 
       btn.dataset.skillId = s.id;
+      btn.dataset.size = s.size ?? "minor";
+      btn.style.left = `${s.x}px`;
+      btn.style.top = `${s.y}px`;
+      btn.title = `${s.name} (${s.type})`;
 
       btn.innerHTML = `
-        <div class="skillNode__icon">${s.icon}</div>
-        <div class="skillNode__name">${s.name}</div>
-        <div class="skillNode__cost">${unlocked ? "OWNED" : `CUSTO ${s.cost}`}</div>
-      `;
+      <div class="skillNode__icon">${s.icon}</div>
+      <div class="skillNode__name">${s.name}</div>
+      <div class="skillNode__cost">${
+        unlocked ? "OWNED" : `CUSTO ${s.cost}`
+      }</div>
+    `;
 
-      btn.addEventListener("click", () => selectSkill(s.id));
+      btn.addEventListener("click", () => {
+        selectSkill(s.id);
+        focusSkill(s.id);
+      });
+
       skillsGrid.appendChild(btn);
     }
 
-    requestAnimationFrame(drawSkillLines);
+    drawSkillLines(pathSet);
   }
 
   function selectSkill(id: string): void {
     selectedSkillId = id;
-    const s = SKILLS.find((x) => x.id === id);
+    const s = skillsById.get(id);
     if (!s) return;
 
     skillTitle.textContent = `${s.icon} ${s.name}`;
@@ -1314,9 +1645,12 @@ export function bootGame(): void {
 
     btnUnlockSkill.disabled = unlocked || !ok;
 
-    if (unlocked) skillHint.textContent = "Você já possui esta habilidade.";
-    else if (!ok) {
-      const missingReq = (s.req || []).filter((r) => !hasSkill(r));
+    if (unlocked) {
+      skillHint.textContent = "Você já possui esta habilidade.";
+    } else if (!ok) {
+      const missingReq = (s.req || [])
+        .filter((r) => !hasSkill(r))
+        .map(skillLabel);
       if (meta.cores < s.cost) skillHint.textContent = "Núcleos insuficientes.";
       else skillHint.textContent = `Requer: ${missingReq.join(", ") || "—"}.`;
     } else {
@@ -1326,72 +1660,8 @@ export function bootGame(): void {
     renderSkillTree();
   }
 
-  function drawSkillLines(): void {
-    skillsLines.innerHTML = "";
-
-    const wrapEl = skillsGrid;
-    const nodes = Array.from(wrapEl.querySelectorAll<HTMLButtonElement>(".skillNode"));
-    const rectWrap = wrapEl.getBoundingClientRect();
-
-    function centerOf(elBtn: HTMLElement): { x: number; y: number } {
-      const r = elBtn.getBoundingClientRect();
-      return {
-        x: r.left - rectWrap.left + r.width / 2,
-        y: r.top - rectWrap.top + r.height / 2,
-      };
-    }
-
-    const map = new Map<string, HTMLElement>();
-    for (const n of nodes) {
-      const id = n.dataset.skillId;
-      if (id) map.set(id, n);
-    }
-
-    for (const s of SKILLS) {
-      if (!s.req || s.req.length === 0) continue;
-      const toEl = map.get(s.id);
-      if (!toEl) continue;
-
-      for (const req of s.req) {
-        const fromEl = map.get(req);
-        if (!fromEl) continue;
-
-        const a = centerOf(fromEl);
-        const b = centerOf(toEl);
-
-        const unlocked = hasSkill(s.id) && hasSkill(req);
-        const stroke = unlocked ? "rgba(67,255,122,0.35)" : "rgba(255,255,255,0.16)";
-
-        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        const midX = (a.x + b.x) / 2;
-        const d = `M ${a.x} ${a.y} C ${midX} ${a.y}, ${midX} ${b.y}, ${b.x} ${b.y}`;
-        path.setAttribute("d", d);
-        path.setAttribute("fill", "none");
-        path.setAttribute("stroke", stroke);
-        path.setAttribute("stroke-width", "2");
-        path.setAttribute("stroke-linecap", "round");
-        skillsLines.appendChild(path);
-      }
-    }
-  }
-
-  function openSkills(): void {
-    setOverlay(panelSkills);
-    renderSkillTree();
-    if (!selectedSkillId) selectSkill("core");
-  }
-
-  function closeSkills(): void {
-    if (game.state === STATE.MENU) setOverlay(panelMenu);
-    else if (game.state === STATE.PAUSED) setOverlay(panelPause);
-    else hideOverlay();
-  }
-
-  btnSkills.addEventListener("click", openSkills);
-  btnCloseSkills.addEventListener("click", closeSkills);
-
   btnUnlockSkill.addEventListener("click", () => {
-    const s = SKILLS.find((x) => x.id === selectedSkillId);
+    const s = selectedSkillId ? skillsById.get(selectedSkillId) : null;
     if (!s) return;
     if (!canUnlockSkill(s)) return;
 
@@ -1402,6 +1672,173 @@ export function bootGame(): void {
     renderSkillTree();
     selectSkill(s.id);
   });
+
+  // Pan/Zoom
+  let dragging = false;
+  let lastX = 0;
+  let lastY = 0;
+
+  skillsTreeWrap.addEventListener("pointerdown", (e) => {
+    const t = e.target as HTMLElement;
+    if (t.closest(".skillNode")) return;
+    dragging = true;
+    lastX = e.clientX;
+    lastY = e.clientY;
+    skillsTreeWrap.setPointerCapture(e.pointerId);
+  });
+
+  skillsTreeWrap.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    const dx = e.clientX - lastX;
+    const dy = e.clientY - lastY;
+    lastX = e.clientX;
+    lastY = e.clientY;
+    view.x += dx;
+    view.y += dy;
+    applyView();
+  });
+
+  skillsTreeWrap.addEventListener("pointerup", () => {
+    dragging = false;
+  });
+
+  skillsTreeWrap.addEventListener(
+    "wheel",
+    (e) => {
+      e.preventDefault();
+      const wrap = skillsTreeWrap.getBoundingClientRect();
+
+      const mx = e.clientX - wrap.left;
+      const my = e.clientY - wrap.top;
+
+      const oldS = view.s;
+      const dir = e.deltaY > 0 ? -1 : 1;
+      const factor = dir > 0 ? 1.1 : 0.9;
+      view.s = clamp(view.s * factor, view.minS, view.maxS);
+
+      const k = view.s / oldS;
+      view.x = mx - (mx - view.x) * k;
+      view.y = my - (my - view.y) * k;
+
+      applyView();
+    },
+    { passive: false }
+  );
+
+  btnSkillsZoomIn.addEventListener("click", () => {
+    view.s = clamp(view.s * 1.12, view.minS, view.maxS);
+    applyView();
+  });
+
+  btnSkillsZoomOut.addEventListener("click", () => {
+    view.s = clamp(view.s * 0.88, view.minS, view.maxS);
+    applyView();
+  });
+
+  btnSkillsReset.addEventListener("click", () => {
+    view.s = 1;
+    view.x = 0;
+    view.y = 0;
+    fitAll();
+  });
+
+  btnSkillsFit.addEventListener("click", () => fitAll());
+
+  // Busca
+  function renderSearchResults(q: string): void {
+    const query = q.trim().toLowerCase();
+    if (!query) {
+      skillsSearchResults.classList.add("hidden");
+      skillsSearchResults.innerHTML = "";
+      return;
+    }
+
+    const hits = SKILLS.filter((s) => {
+      const hay = `${s.name} ${s.desc} ${s.type}`.toLowerCase();
+      return hay.includes(query);
+    }).slice(0, 9);
+
+    if (hits.length === 0) {
+      skillsSearchResults.classList.remove("hidden");
+      skillsSearchResults.innerHTML = `<div class="skillsSearchResults__item">Nada encontrado.</div>`;
+      return;
+    }
+
+    skillsSearchResults.classList.remove("hidden");
+    skillsSearchResults.innerHTML = "";
+
+    for (const s of hits) {
+      const unlocked = hasSkill(s.id);
+      const ok = canUnlockSkill(s);
+      const item = document.createElement("div");
+      item.className = "skillsSearchResults__item";
+      item.innerHTML = `
+      <div style="display:flex;gap:10px;align-items:center;min-width:0;">
+        <div style="font-size:14px">${s.icon}</div>
+        <div style="min-width:0;">
+          <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${
+            s.name
+          }</div>
+          <div style="opacity:.75;font-size:10px;letter-spacing:.08em;">${
+            s.type
+          } • custo ${s.cost}</div>
+        </div>
+      </div>
+      <div class="skillsSearchResults__meta">
+        <span class="skillsSearchResults__tag">${
+          unlocked ? "OWNED" : ok ? "OK" : "LOCK"
+        }</span>
+      </div>
+    `;
+
+      item.addEventListener("click", () => {
+        skillSearch.value = "";
+        skillsSearchResults.classList.add("hidden");
+        selectSkill(s.id);
+        focusSkill(s.id);
+      });
+
+      skillsSearchResults.appendChild(item);
+    }
+  }
+
+  skillSearch.addEventListener("input", () =>
+    renderSearchResults(skillSearch.value)
+  );
+  document.addEventListener("click", (e) => {
+    const t = e.target as HTMLElement;
+    if (t.closest(".skillsSearch")) return;
+    if (t.closest("#skillsSearchResults")) return;
+    skillsSearchResults.classList.add("hidden");
+  });
+
+  // open/close skills
+  function openSkills(): void {
+    setOverlay(panelSkills);
+
+    // remove o minimap do DOM se existir (pra liberar espaço total no viewport)
+    const mini = document.getElementById("skillsMinimap");
+    if (mini) mini.remove();
+    const miniSvg = document.getElementById("skillsMinimapSvg");
+    if (miniSvg) miniSvg.remove();
+
+    ensureStage();
+    renderSkillTree();
+    fitAll();
+    if (!selectedSkillId) {
+      selectSkill("core");
+      focusSkill("core");
+    }
+  }
+
+  function closeSkills(): void {
+    if (game.state === STATE.MENU) setOverlay(panelMenu);
+    else if (game.state === STATE.PAUSED) setOverlay(panelPause);
+    else hideOverlay();
+  }
+
+  btnSkills.addEventListener("click", openSkills);
+  btnCloseSkills.addEventListener("click", closeSkills);
 
   // =========================
   // Init / Menu
@@ -1452,7 +1889,12 @@ export function bootGame(): void {
 
     draw();
 
-    if (game.state === STATE.PAUSED || game.state === STATE.MENU || game.state === STATE.GAMEOVER) return;
+    if (
+      game.state === STATE.PAUSED ||
+      game.state === STATE.MENU ||
+      game.state === STATE.GAMEOVER
+    )
+      return;
 
     music.tick(game.musicReady);
 
@@ -1473,7 +1915,13 @@ export function bootGame(): void {
         createWave();
         game.state = STATE.COUNTDOWN;
         game.countdown = 3.0;
-        addFloater(canv.width / 2, canv.height * 0.42, `WAVE ${game.wave + 1}`, "#27f3ff", 1.2);
+        addFloater(
+          canv.width / 2,
+          canv.height * 0.42,
+          `WAVE ${game.wave + 1}`,
+          "#27f3ff",
+          1.2
+        );
       }
       return;
     }
@@ -1502,7 +1950,8 @@ export function bootGame(): void {
     ship.shootCd = Math.max(0, ship.shootCd - DT);
     ship.tookHitGrace = Math.max(0, ship.tookHitGrace - DT);
 
-    const tun = game.tuning ?? (DIFFS[settings.difficulty] as unknown as Tuning);
+    const tun =
+      game.tuning ?? (DIFFS[settings.difficulty] as unknown as Tuning);
 
     if (ship.thrusting && !ship.dead) {
       ship.thrust.x += (tun.thrust * Math.cos(ship.a)) / FPS;
@@ -1642,7 +2091,10 @@ export function bootGame(): void {
       const next = 10 - Math.min(6, game.wave * 0.5);
       game.ufoSpawnT = clamp(next / getUfoRate(), 3.5, 12);
 
-      const chance = 0.25 + Math.min(0.35, game.wave * 0.03) + Math.min(0.2, game.score / 1200);
+      const chance =
+        0.25 +
+        Math.min(0.35, game.wave * 0.03) +
+        Math.min(0.2, game.score / 1200);
       if (Math.random() < chance) spawnUfo();
     }
 
@@ -1658,7 +2110,11 @@ export function bootGame(): void {
         ufoShoot();
       }
 
-      if (u.life <= 0 || (u.dir === 1 && u.x > canv.width + 60) || (u.dir === -1 && u.x < -60)) {
+      if (
+        u.life <= 0 ||
+        (u.dir === 1 && u.x > canv.width + 60) ||
+        (u.dir === -1 && u.x < -60)
+      ) {
         despawnUfo();
       }
     }
@@ -1679,7 +2135,12 @@ export function bootGame(): void {
       if (b.y < 0) b.y = canv.height;
       else if (b.y > canv.height) b.y = 0;
 
-      if (!ship.dead && ship.explodeTime === 0 && ship.blinkNum === 0 && ship.tookHitGrace <= 0) {
+      if (
+        !ship.dead &&
+        ship.explodeTime === 0 &&
+        ship.blinkNum === 0 &&
+        ship.tookHitGrace <= 0
+      ) {
         if (dist(ship.x, ship.y, b.x, b.y) < ship.r + b.r) {
           game.ufoBullets.splice(i, 1);
           if (ship.shield > 0) {
@@ -1722,7 +2183,17 @@ export function bootGame(): void {
           doShake(9, 0.22);
           doFlash(0.35);
 
-          spawnParticles(game.ufo.x, game.ufo.y, 70, "#ff2bd6", 360, 0.25, 1.1, 1.1, 2.8);
+          spawnParticles(
+            game.ufo.x,
+            game.ufo.y,
+            70,
+            "#ff2bd6",
+            360,
+            0.25,
+            1.1,
+            1.1,
+            2.8
+          );
           addScore(ufoScore(), game.ufo.x, game.ufo.y);
           bumpCombo();
           precisionHit();
@@ -1737,7 +2208,12 @@ export function bootGame(): void {
     }
 
     // ship collides asteroid
-    if (!exploding && !ship.dead && ship.blinkNum === 0 && ship.tookHitGrace <= 0) {
+    if (
+      !exploding &&
+      !ship.dead &&
+      ship.blinkNum === 0 &&
+      ship.tookHitGrace <= 0
+    ) {
       for (let i = 0; i < game.roids.length; i++) {
         const a = game.roids[i];
         if (dist(ship.x, ship.y, a.x, a.y) < ship.r + a.r) {
@@ -1790,14 +2266,20 @@ export function bootGame(): void {
 
     for (const r of game.roids) {
       const isL = r.r >= Math.ceil(BASE.ROID_SIZE / 2);
-      const isM = r.r >= Math.ceil(BASE.ROID_SIZE / 4) && r.r < Math.ceil(BASE.ROID_SIZE / 2);
+      const isM =
+        r.r >= Math.ceil(BASE.ROID_SIZE / 4) &&
+        r.r < Math.ceil(BASE.ROID_SIZE / 2);
 
       const stroke = isL
         ? "rgba(200,210,215,0.85)"
         : isM
         ? "rgba(190,200,210,0.85)"
         : "rgba(160,190,220,0.92)";
-      const glow = isL ? "rgba(39,243,255,0.18)" : isM ? "rgba(255,43,214,0.14)" : "rgba(67,255,122,0.14)";
+      const glow = isL
+        ? "rgba(39,243,255,0.18)"
+        : isM
+        ? "rgba(255,43,214,0.14)"
+        : "rgba(67,255,122,0.14)";
 
       ctx.save();
       ctx.strokeStyle = stroke;
@@ -1821,10 +2303,14 @@ export function bootGame(): void {
     if (game.ufo) {
       const u = game.ufo;
       ctx.save();
-      ctx.strokeStyle = u.small ? "rgba(255,43,214,0.9)" : "rgba(39,243,255,0.9)";
+      ctx.strokeStyle = u.small
+        ? "rgba(255,43,214,0.9)"
+        : "rgba(39,243,255,0.9)";
       ctx.lineWidth = 2;
       ctx.shadowBlur = 14;
-      ctx.shadowColor = u.small ? "rgba(255,43,214,0.35)" : "rgba(39,243,255,0.30)";
+      ctx.shadowColor = u.small
+        ? "rgba(255,43,214,0.35)"
+        : "rgba(39,243,255,0.30)";
 
       ctx.beginPath();
       ctx.ellipse(u.x, u.y, u.r + 8, u.r, 0, 0, Math.PI * 2);
@@ -1925,13 +2411,20 @@ export function bootGame(): void {
 
         ctx.beginPath();
         ctx.moveTo(
-          ship.x - ship.r * ((2 / 3) * Math.cos(ship.a) + 0.5 * Math.sin(ship.a)),
-          ship.y + ship.r * ((2 / 3) * Math.sin(ship.a) - 0.5 * Math.cos(ship.a))
+          ship.x -
+            ship.r * ((2 / 3) * Math.cos(ship.a) + 0.5 * Math.sin(ship.a)),
+          ship.y +
+            ship.r * ((2 / 3) * Math.sin(ship.a) - 0.5 * Math.cos(ship.a))
         );
-        ctx.lineTo(ship.x - ((ship.r * 6) / 3) * Math.cos(ship.a), ship.y + ((ship.r * 6) / 3) * Math.sin(ship.a));
         ctx.lineTo(
-          ship.x - ship.r * ((2 / 3) * Math.cos(ship.a) - 0.5 * Math.sin(ship.a)),
-          ship.y + ship.r * ((2 / 3) * Math.sin(ship.a) + 0.5 * Math.cos(ship.a))
+          ship.x - ((ship.r * 6) / 3) * Math.cos(ship.a),
+          ship.y + ((ship.r * 6) / 3) * Math.sin(ship.a)
+        );
+        ctx.lineTo(
+          ship.x -
+            ship.r * ((2 / 3) * Math.cos(ship.a) - 0.5 * Math.sin(ship.a)),
+          ship.y +
+            ship.r * ((2 / 3) * Math.sin(ship.a) + 0.5 * Math.cos(ship.a))
         );
         ctx.closePath();
         ctx.fill();
